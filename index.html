@@ -818,8 +818,8 @@
                             checkEnemyDeath(enemy);
                         }
                     }
-                }); // Cierre correcto de enemies.forEach
-            }); // Cierre correcto de projectiles.forEach
+                }); // <-- LLAVE DE CIERRE CORRECTA PARA ENEMIGOS
+            }); // <-- LLAVE DE CIERRE CORRECTA PARA PROYECTILES
 
             // Limpiar proyectiles muertos o fuera de rango
             projectiles = projectiles.filter(p => p.alive);
