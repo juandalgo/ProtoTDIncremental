@@ -316,6 +316,46 @@
                 this.hp = this.maxHp;
             }
 
+        class Projectile {
+            constructor(startX, startY, targetX, targetY, damage) {
+                this.x = startX;
+                this.y = startY;
+                this.damage = damage;
+                this.radius = 4;
+                this.speed = 7; // Velocidad del proyectil
+                
+                // Calcular dirección hacia el ratón
+                const dx = targetX - startX;
+                const dy = targetY - startY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                this.vx = dist > 0 ? (dx / dist) * this.speed : 0;
+                this.vy = dist > 0 ? (dy / dist) * this.speed : this.speed;
+                this.alive = true;
+            }
+        
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+        
+                // Si se sale de la pantalla, destruirlo
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.alive = false;
+                }
+            }
+        
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#00d2d3'; // Color cian brillante
+                ctx.shadowColor = '#00d2d3';
+                ctx.shadowBlur = 8; // Efecto de brillo de plasma
+                ctx.fill();
+                ctx.shadowBlur = 0; // Resetear sombra para no ralentizar el resto
+            }
+        }
+            
+
             update(targetX, targetY, dt) {
                 const dx = targetX - this.x;
                 const dy = targetY - this.y;
@@ -400,7 +440,7 @@
                 const widthOffset = this.radius * 1.1;
 
                 ctx.save();
-                ctx.fillStyle = 'rgba(5, 7, 12, 0.6)';
+                ctx.fillStyle = 'rgba(5, 7, 12, 1.0)';
                 ctx.beginPath();
                 ctx.moveTo(this.x + Math.cos(angle + Math.PI / 2) * widthOffset, this.y + Math.sin(angle + Math.PI / 2) * widthOffset);
                 ctx.lineTo(this.x + Math.cos(angle - Math.PI / 2) * widthOffset, this.y + Math.sin(angle - Math.PI / 2) * widthOffset);
