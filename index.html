@@ -238,6 +238,7 @@
         let damageTexts = [];
         let spiralGolds = [];
         let visualLightningChains = [];
+        let projectiles = [];
 
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
@@ -655,7 +656,7 @@
             gameState.spawnTimer = 0; gameState.attackTimer = 0;
             gameState.intensity = 1 + (gameState.round * 0.40); 
 
-            enemies = []; particles = []; damageTexts = []; spiralGolds = []; visualLightningChains = [];
+            enemies = []; particles = []; damageTexts = []; spiralGolds = []; visualLightningChains = []; projectiles = [];
 
             document.getElementById('shop-overlay').classList.add('hidden');
             document.getElementById('start-overlay').classList.add('hidden');
@@ -682,6 +683,31 @@
             renderShop(); updateHUD();
         }
 
+
+        // Funcion de ataque disparando desde la torre a la posicion del mouse //
+        function triggerPulseAttack() {
+            if (!gameState.isRoundActive) return;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const baseDamage = upgrades.dps.value;
+        
+            // 1. Disparo Principal (Proyectil básico)
+            projectiles.push(new Projectile(centerX, centerY, gameState.mouseX, gameState.mouseY, baseDamage));
+        
+            // 2. ATAQUE DESBLOQUEABLE: Multidisparo (Si se compra en la tienda)
+            if (upgrades.unlockMultishot.unlocked) {
+                // Disparar dos proyectiles extra con un pequeño desvío angular
+                const angle = Math.atan2(gameState.mouseY - centerY, gameState.mouseX - centerX);
+                const spread = 0.25; // Ángulo de dispersión
+        
+                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(angle - spread) * 100, centerY + Math.sin(angle - spread) * 100, baseDamage * 0.7));
+                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(angle + spread) * 100, centerY + Math.sin(angle + spread) * 100, baseDamage * 0.7));
+            }
+        }        
+        
+        /*Logica para el pulso alrededor del mouse:
+        
         function triggerPulseAttack() {
             if (!gameState.isRoundActive) return;
             const radius = upgrades.radius.value; const baseDamage = upgrades.dps.value;
@@ -704,6 +730,7 @@
             gameState.enemiesAlive = enemies.length;
             updateHUD();
         }
+        */
 
         let lastTime = 0;
         function loop(timestamp) {
@@ -763,7 +790,35 @@
                         for(let i=0; i<5; i++) particles.push(new Particle(enemy.x, enemy.y, '#ff4757', 1.2));
                     }
                 } else { enemy.draw(); }
+
+             // --- ACTUALIZAR Y DIBUJAR PROYECTILES ---
+            projectiles.forEach(proj => {
+                proj.update();
+                proj.draw();
+            
+                // Comprobar colisión con cada enemigo
+                enemies.forEach(enemy => {
+                    if (enemy.hp > 0 && proj.alive) {
+                        const dx = enemy.x - proj.x;
+                        const dy = enemy.y - proj.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+            
+                        if (dist <= (enemy.radius + proj.radius)) {
+                            proj.alive = false; // El proyectil impacta y muere
+                            enemy.hp -= proj.damage;
+                            damageTexts.push(new DamageText(enemy.x, enemy.y, Math.floor(proj.damage)));
+                            
+                            // Partículas de impacto
+                            for(let k=0; k<2; k++) particles.push(new Particle(enemy.x, enemy.y, enemy.color, 0.8));
+                            
+                            checkEnemyDeath(enemy);
+                        }
+                    }
+                });
             });
+            // Limpiar proyectiles muertos o fuera de rango
+            projectiles = projectiles.filter(p => p.alive);
+      });
 
             if (gameState.isRoundActive) {
                 enemies = enemies.filter(e => e.hp > 0); gameState.enemiesAlive = enemies.length;
