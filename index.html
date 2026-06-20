@@ -320,26 +320,8 @@
                 this.hp = this.maxHp;
             }
         
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-        
-                // Si se sale de la pantalla, destruirlo
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.alive = false;
-                }
-            }
-        
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#00d2d3'; // Color cian brillante
-                ctx.shadowColor = '#00d2d3';
-                ctx.shadowBlur = 8; // Efecto de brillo de plasma
-                ctx.fill();
-                ctx.shadowBlur = 0; // Resetear sombra para no ralentizar el resto
-            }
-        }
+           update(targetX, targetY, dt) {
+             
             
 
             update(targetX, targetY, dt) {
@@ -444,9 +426,8 @@
                 this.y = startY;
                 this.damage = damage;
                 this.radius = 4;
-                this.speed = 7; // Velocidad del proyectil
+                this.speed = 9; // Velocidad de las balas
                 
-                // Calcular dirección hacia el ratón
                 const dx = targetX - startX;
                 const dy = targetY - startY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -455,6 +436,26 @@
                 this.vy = dist > 0 ? (dy / dist) * this.speed : this.speed;
                 this.alive = true;
             }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                // Si sale de la pantalla se destruye
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.alive = false;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#00d2d3';
+                ctx.shadowColor = '#00d2d3';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
 
 
         class SpiralGold {
@@ -808,18 +809,18 @@
                         const dist = Math.sqrt(dx * dx + dy * dy);
             
                         if (dist <= (enemy.radius + proj.radius)) {
-                            proj.alive = false; // El proyectil impacta y muere
+                            proj.alive = false; 
                             enemy.hp -= proj.damage;
                             damageTexts.push(new DamageText(enemy.x, enemy.y, Math.floor(proj.damage)));
                             
-                            // Partículas de impacto
                             for(let k=0; k<2; k++) particles.push(new Particle(enemy.x, enemy.y, enemy.color, 0.8));
                             
                             checkEnemyDeath(enemy);
                         }
                     }
-             });
-        });
+                }); // Cierre correcto de enemies.forEach
+            }); // Cierre correcto de projectiles.forEach
+
             // Limpiar proyectiles muertos o fuera de rango
             projectiles = projectiles.filter(p => p.alive);
     
