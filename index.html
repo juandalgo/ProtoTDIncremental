@@ -221,14 +221,17 @@
             screenShake: 0,
             spawnTimer: 0,
             attackTimer: 0,
-            intensity: 1 
+            intensity: 1,
+            cameraZoom: 2.4,        // más alejado al inicio
+            cameraZoomTarget: 2.4
         };
 
         const upgrades = {
             dps: { name: "Daño Balas", cost: 10, baseCost: 10, level: 1, scale: 1.4, value: 10, inc: 6, unlocked: true, desc: "Incrementa el daño de cada proyectil" },
             atkSpeed: { name: "Frecuencia", cost: 15, baseCost: 15, level: 1, scale: 1.5, value: 1.5, inc: 0.4, unlocked: true, desc: "Proyectiles disparados por segundo" },
-            // Reemplazamos el antiguo radio por velocidad/penetración o un modificador útil:
-            pierceChance: { name: "Calibre Pesado", cost: 30, baseCost: 30, level: 1, scale: 1.5, value: 0, inc: 5, unlocked: true, desc: "Aumenta la fuerza de impacto cinético" }, 
+            bulletSize: { name: "Tamaño Proyectil", cost: 20, baseCost: 20, level: 1, scale: 1.4, value: 4, inc: 2, unlocked: true, desc: "Aumenta el radio de los proyectiles" },
+            pierceCount: { name: "Penetración", cost: 40, baseCost: 40, level: 1, scale: 1.6, value: 0, inc: 1, unlocked: true, desc: "Enemigos adicionales que atraviesa cada proyectil" },
+            bulletCount: { name: "Salva", cost: 50, baseCost: 50, level: 1, scale: 1.5, value: 1, inc: 1, unlocked: true, desc: "Proyectiles extra disparados en abanico por salva" },
             roundTime: { name: "Duración Ronda", cost: 30, baseCost: 30, level: 1, scale: 1.4, value: 20, inc: 5, unlocked: true, desc: "Aumenta el tiempo de la ronda (+5s)" },
             // NUEVO ATAQUE DESBLOQUEABLE:
             unlockMultishot: { name: "Disparo Triple", cost: 200, baseCost: 200, level: 0, scale: 1, value: 0, inc: 1, unlocked: false, isUnlock: true, desc: "Desbloquea 2 proyectiles laterales de apoyo" },
@@ -252,8 +255,13 @@
 
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            gameState.mouseX = e.clientX - rect.left;
-            gameState.mouseY = e.clientY - rect.top;
+            // Convertir coordenadas de pantalla a espacio de mundo (inverso del zoom de cámara)
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            gameState.mouseX = cx + (screenX - cx) / gameState.cameraZoom;
+            gameState.mouseY = cy + (screenY - cy) / gameState.cameraZoom;
         });
 
         class Enemy {
@@ -320,10 +328,6 @@
                 this.hp = this.maxHp;
             }
         
-           update(targetX, targetY, dt) {
-             
-            
-
             update(targetX, targetY, dt) {
                 const dx = targetX - this.x;
                 const dy = targetY - this.y;
@@ -417,16 +421,17 @@
                 ctx.closePath();
                 ctx.fill();
                 ctx.restore();
-                }
             }
+        }
 
-         class Projectile {
+        class Projectile {
             constructor(startX, startY, targetX, targetY, damage) {
                 this.x = startX;
                 this.y = startY;
                 this.damage = damage;
-                this.radius = 4;
-                this.speed = 9; // Velocidad de las balas
+                this.radius = upgrades.bulletSize.value;
+                this.speed = 9;
+                this.pierceLeft = upgrades.pierceCount.value; // enemies left to pierce through
                 
                 const dx = targetX - startX;
                 const dy = targetY - startY;
@@ -440,7 +445,6 @@
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
-                // Si sale de la pantalla se destruye
                 if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
                     this.alive = false;
                 }
@@ -575,9 +579,20 @@
 
         function spawnEnemySquad() {
             if (!gameState.isRoundActive) return;
-            const baseMin = 6; const baseMax = 12;
-            const scalar = Math.pow(1.2, gameState.round - 1);
-            const squadSize = Math.floor((baseMin + Math.random() * (baseMax - baseMin + 1)) * scalar);
+
+            // Tiempo transcurrido desde el inicio de la ronda
+            const elapsed = upgrades.roundTime.value - gameState.timeLeft;
+            // Rampa suave: primeros 10s muy pocos enemigos, luego escala rápido
+            const rampT = Math.max(0, elapsed - 10) / Math.max(1, upgrades.roundTime.value - 10);
+            const rampMultiplier = 1 + rampT * rampT * 8; // cuadrático: suave al inicio, agresivo al final
+
+            const roundScalar = Math.pow(1.15, gameState.round - 1);
+            const baseMin = 2;
+            const baseMax = 4;
+            const squadSize = Math.max(1, Math.floor((baseMin + Math.random() * (baseMax - baseMin + 1)) * rampMultiplier * roundScalar));
+
+            // También el cooldown entre squads se acorta con el tiempo
+            // (esto solo afecta el tamaño; el cooldown se controla en el loop con gameState.intensity)
 
             let spawnX, spawnY;
             const side = Math.floor(Math.random() * 4);
@@ -610,8 +625,10 @@
                 
                 let valDisplay = up.value;
                 if (key === 'atkSpeed') valDisplay = up.value.toFixed(2) + "/s";
-                if (key === 'radius') valDisplay = up.value + "px";
                 if (key === 'roundTime') valDisplay = up.value + "s";
+                if (key === 'bulletSize') valDisplay = up.value + "px";
+                if (key === 'pierceCount') valDisplay = up.value === 0 ? "sin penetración" : `+${up.value}`;
+                if (key === 'bulletCount') valDisplay = up.value;
                 if (up.isUnlock) valDisplay = up.unlocked ? "ACTIVO" : "BLOQUEADO";
 
                 btn.innerHTML = `
@@ -658,7 +675,9 @@
             gameState.timeLeft = upgrades.roundTime.value;
             gameState.isRoundActive = true;
             gameState.spawnTimer = 0; gameState.attackTimer = 0;
-            gameState.intensity = 1 + (gameState.round * 0.40); 
+            gameState.intensity = 1 + (gameState.round * 0.40);
+            gameState.cameraZoom = 2.4;
+            gameState.cameraZoomTarget = 2.4;
 
             enemies = []; particles = []; damageTexts = []; spiralGolds = []; visualLightningChains = []; projectiles = [];
 
@@ -695,18 +714,24 @@
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
             const baseDamage = upgrades.dps.value;
+            const baseAngle = Math.atan2(gameState.mouseY - centerY, gameState.mouseX - centerX);
+            const totalShots = upgrades.bulletCount.value;
+
+            // Disparar N proyectiles en abanico centrado en el ángulo del mouse
+            for (let s = 0; s < totalShots; s++) {
+                const spreadRange = (totalShots > 1) ? 0.35 : 0;
+                const angleOffset = (totalShots > 1) ? -spreadRange / 2 + (spreadRange / (totalShots - 1)) * s : 0;
+                const shotAngle = baseAngle + angleOffset;
+                const tx = centerX + Math.cos(shotAngle) * 100;
+                const ty = centerY + Math.sin(shotAngle) * 100;
+                projectiles.push(new Projectile(centerX, centerY, tx, ty, baseDamage));
+            }
         
-            // 1. Disparo Principal (Proyectil básico)
-            projectiles.push(new Projectile(centerX, centerY, gameState.mouseX, gameState.mouseY, baseDamage));
-        
-            // 2. ATAQUE DESBLOQUEABLE: Multidisparo (Si se compra en la tienda)
+            // ATAQUE DESBLOQUEABLE: Multidisparo (Si se compra en la tienda)
             if (upgrades.unlockMultishot.unlocked) {
-                // Disparar dos proyectiles extra con un pequeño desvío angular
-                const angle = Math.atan2(gameState.mouseY - centerY, gameState.mouseX - centerX);
-                const spread = 0.25; // Ángulo de dispersión
-        
-                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(angle - spread) * 100, centerY + Math.sin(angle - spread) * 100, baseDamage * 0.7));
-                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(angle + spread) * 100, centerY + Math.sin(angle + spread) * 100, baseDamage * 0.7));
+                const spread = 0.25;
+                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(baseAngle - spread) * 100, centerY + Math.sin(baseAngle - spread) * 100, baseDamage * 0.7));
+                projectiles.push(new Projectile(centerX, centerY, centerX + Math.cos(baseAngle + spread) * 100, centerY + Math.sin(baseAngle + spread) * 100, baseDamage * 0.7));
             }
         }        
         
@@ -748,7 +773,10 @@
                 gameState.timeLeft -= dt; gameState.spawnTimer += dt;
                 if (gameState.timeLeft <= 0) { gameState.timeLeft = 0; finishRound(true); }
 
-                const squadCooldown = Math.max(1.5, 4.0 / gameState.intensity);
+                const elapsed = upgrades.roundTime.value - gameState.timeLeft;
+                const rampT = Math.max(0, elapsed - 10) / Math.max(1, upgrades.roundTime.value - 10);
+                // Cooldown: empieza en 4s, baja a 1s conforme avanza la ronda
+                const squadCooldown = Math.max(1.0, 4.0 - rampT * 3.0) / gameState.intensity;
                 if (gameState.spawnTimer >= squadCooldown) { gameState.spawnTimer = 0; spawnEnemySquad(); }
 
                 gameState.attackTimer += dt;
@@ -756,11 +784,41 @@
 
                 const progressPercent = (gameState.timeLeft / upgrades.roundTime.value) * 100;
                 document.getElementById('difficulty-bar').style.width = `${progressPercent}%`;
+
+                // Calcular zoom target: empieza cerca (2.4) y se aleja a 1.0 conforme pasa el tiempo
+                const totalTime = upgrades.roundTime.value;
+                const zoomProgress = Math.min(elapsed / totalTime, 1);
+                gameState.cameraZoomTarget = 2.4 - (1.4 * zoomProgress); // de 2.4 a 1.0
+                // Suavizar el zoom
+                gameState.cameraZoom += (gameState.cameraZoomTarget - gameState.cameraZoom) * dt * 1.5;
             }
 
-            enemies.forEach(enemy => enemy.drawShadow(centerX, centerY));
-
+            // --- APLICAR ZOOM DE CÁMARA ---
             ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.scale(gameState.cameraZoom, gameState.cameraZoom);
+            ctx.translate(-centerX, -centerY);
+
+            // Sombras: longitud calculada para alcanzar los bordes de pantalla desde cualquier posición
+            enemies.forEach(enemy => {
+                const dx = enemy.x - centerX;
+                const dy = enemy.y - centerY;
+                const angle = Math.atan2(dy, dx);
+                // Longitud suficiente para llegar al borde más lejano en espacio de mundo (antes del zoom)
+                const maxDim = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / gameState.cameraZoom;
+                const shadowLength = maxDim * 1.5;
+                const widthOffset = enemy.radius * 1.1;
+
+                ctx.fillStyle = 'rgba(5, 7, 12, 1.0)';
+                ctx.beginPath();
+                ctx.moveTo(enemy.x + Math.cos(angle + Math.PI / 2) * widthOffset, enemy.y + Math.sin(angle + Math.PI / 2) * widthOffset);
+                ctx.lineTo(enemy.x + Math.cos(angle - Math.PI / 2) * widthOffset, enemy.y + Math.sin(angle - Math.PI / 2) * widthOffset);
+                ctx.lineTo(enemy.x + Math.cos(angle - Math.PI / 2) * widthOffset + Math.cos(angle) * shadowLength, enemy.y + Math.sin(angle - Math.PI / 2) * widthOffset + Math.sin(angle) * shadowLength);
+                ctx.lineTo(enemy.x + Math.cos(angle + Math.PI / 2) * widthOffset + Math.cos(angle) * shadowLength, enemy.y + Math.sin(angle + Math.PI / 2) * widthOffset + Math.sin(angle) * shadowLength);
+                ctx.closePath();
+                ctx.fill();
+            });
+
             if (gameState.screenShake > 0) {
                 ctx.translate((Math.random() - 0.5) * gameState.screenShake, (Math.random() - 0.5) * gameState.screenShake);
                 gameState.screenShake *= 0.9; if (gameState.screenShake < 0.2) gameState.screenShake = 0;
@@ -808,24 +866,25 @@
                         const dy = enemy.y - proj.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
             
-                        if (dist <= (enemy.radius + proj.radius)) {
-                            proj.alive = false; 
+                        if (dist <= (enemy.radius + proj.radius * 2.2)) {  // hitbox más grande que el visual
                             enemy.hp -= proj.damage;
                             damageTexts.push(new DamageText(enemy.x, enemy.y, Math.floor(proj.damage)));
-                            
                             for(let k=0; k<2; k++) particles.push(new Particle(enemy.x, enemy.y, enemy.color, 0.8));
-                            
                             checkEnemyDeath(enemy);
+
+                            if (proj.pierceLeft > 0) {
+                                proj.pierceLeft--;
+                            } else {
+                                proj.alive = false;
+                            }
                         }
                     }
-                }); // <-- LLAVE DE CIERRE CORRECTA PARA ENEMIGOS
-            }); // <-- LLAVE DE CIERRE CORRECTA PARA PROYECTILES
+                });
+            });
 
             // Limpiar proyectiles muertos o fuera de rango
             projectiles = projectiles.filter(p => p.alive);
-    
 
-        
             if (gameState.isRoundActive) {
                 enemies = enemies.filter(e => e.hp > 0); gameState.enemiesAlive = enemies.length;
                 if (gameState.towerHealth <= 0) { gameState.towerHealth = 0; finishRound(false); }
@@ -835,12 +894,6 @@
             spiralGolds.forEach(g => { g.update(); g.draw(); }); spiralGolds = spiralGolds.filter(g => g.alive);
             damageTexts.forEach(t => { t.update(); t.draw(); }); damageTexts = damageTexts.filter(t => t.alpha > 0);
 
-             /* Esto dibuja el area de impacto alrededor del mouse
-            if (gameState.isRoundActive) {
-                ctx.beginPath(); ctx.arc(gameState.mouseX, gameState.mouseY, upgrades.radius.value, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(0, 210, 211, 0.15)'; ctx.lineWidth = 1.5; ctx.stroke();
-            }
-            */
             ctx.restore(); 
             requestAnimationFrame(loop);
         }
@@ -853,3 +906,4 @@
     </script>
 </body>
 </html>
+
