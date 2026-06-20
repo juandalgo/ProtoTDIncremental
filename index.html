@@ -785,10 +785,10 @@
                 const progressPercent = (gameState.timeLeft / upgrades.roundTime.value) * 100;
                 document.getElementById('difficulty-bar').style.width = `${progressPercent}%`;
 
-                // Calcular zoom target: empieza cerca (1.5) y se aleja a 1.0 conforme pasa el tiempo
+                // Calcular zoom target: empieza cerca (2.4) y se aleja a 1.0 conforme pasa el tiempo
                 const totalTime = upgrades.roundTime.value;
                 const zoomProgress = Math.min(elapsed / totalTime, 1);
-                gameState.cameraZoomTarget = 1.5 - (1.4 * zoomProgress); // de 2.4 a 1.0
+                gameState.cameraZoomTarget = 2 - (1.4 * zoomProgress); // de 2.4 a 1.0
                 // Suavizar el zoom
                 gameState.cameraZoom += (gameState.cameraZoomTarget - gameState.cameraZoom) * dt * 1.5;
             }
