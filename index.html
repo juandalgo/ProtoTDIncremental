@@ -390,25 +390,28 @@
                 }
             }
 
+
+        // EFECTO VISUAL: Sombras radiales tridimensionales proyectadas desde el centro
             drawShadow(centerX, centerY) {
                 const dx = this.x - centerX;
                 const dy = this.y - centerY;
                 const angle = Math.atan2(dy, dx);
-                const shadowLength = 1500;
+                const shadowLength = Math.max(canvas.width, canvas.height) * 1.5;
                 const widthOffset = this.radius * 1.1;
 
                 ctx.save();
-                ctx.fillStyle = 'rgba(5, 7, 12, 0.3)';
+                ctx.fillStyle = 'rgba(5, 7, 12, 0.6)';
                 ctx.beginPath();
-                ctx.moveTo(this.x + Math.cos(angle + Math.PI/2) * widthOffset, this.y + Math.sin(angle + Math.PI/2) * widthOffset);
-                ctx.lineTo(this.x + Math.cos(angle - Math.PI/2) * widthOffset, this.y + Math.sin(angle - Math.PI/2) * widthOffset);
-                ctx.lineTo(this.x + Math.cos(angle - Math.PI/2) * widthOffset + Math.cos(angle) * shadowLength, this.y + Math.sin(angle - Math.PI/2) * widthOffset + Math.sin(angle) * shadowLength);
-                ctx.lineTo(this.x + Math.cos(angle + Math.PI/2) * widthOffset + Math.cos(angle) * shadowLength, this.y + Math.sin(angle + Math.PI/2) * widthOffset + Math.sin(angle) * shadowLength);
+                ctx.moveTo(this.x + Math.cos(angle + Math.PI / 2) * widthOffset, this.y + Math.sin(angle + Math.PI / 2) * widthOffset);
+                ctx.lineTo(this.x + Math.cos(angle - Math.PI / 2) * widthOffset, this.y + Math.sin(angle - Math.PI / 2) * widthOffset);
+                ctx.lineTo(this.x + Math.cos(angle - Math.PI / 2) * widthOffset + Math.cos(angle) * shadowLength, this.y + Math.sin(angle - Math.PI / 2) * widthOffset + Math.sin(angle) * shadowLength);
+                ctx.lineTo(this.x + Math.cos(angle + Math.PI / 2) * widthOffset + Math.cos(angle) * shadowLength, this.y + Math.sin(angle + Math.PI / 2) * widthOffset + Math.sin(angle) * shadowLength);
                 ctx.closePath();
                 ctx.fill();
                 ctx.restore();
+                }
             }
-        }
+
 
         class SpiralGold {
             constructor(startX, startY, targetX, targetY, value) {
