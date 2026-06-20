@@ -319,6 +319,7 @@
                 }
                 this.hp = this.maxHp;
             }
+        }
 
         class Projectile {
             constructor(startX, startY, targetX, targetY, damage) {
@@ -793,6 +794,7 @@
                         for(let i=0; i<5; i++) particles.push(new Particle(enemy.x, enemy.y, '#ff4757', 1.2));
                     }
                 } else { enemy.draw(); }
+            });
 
              // --- ACTUALIZAR Y DIBUJAR PROYECTILES ---
             projectiles.forEach(proj => {
@@ -817,16 +819,17 @@
                             checkEnemyDeath(enemy);
                         }
                     }
-                });
-            });
+             });
             // Limpiar proyectiles muertos o fuera de rango
             projectiles = projectiles.filter(p => p.alive);
-      });
+    
 
+            /* Esto dibuja el area de impacto alrededor del mouse
             if (gameState.isRoundActive) {
                 enemies = enemies.filter(e => e.hp > 0); gameState.enemiesAlive = enemies.length;
                 if (gameState.towerHealth <= 0) { gameState.towerHealth = 0; finishRound(false); }
             }
+            */
 
             particles.forEach(p => { p.update(); p.draw(); }); particles = particles.filter(p => p.alpha > 0);
             spiralGolds.forEach(g => { g.update(); g.draw(); }); spiralGolds = spiralGolds.filter(g => g.alive);
