@@ -825,26 +825,26 @@
             projectiles = projectiles.filter(p => p.alive);
     
 
-            /* Esto dibuja el area de impacto alrededor del mouse
+        
             if (gameState.isRoundActive) {
                 enemies = enemies.filter(e => e.hp > 0); gameState.enemiesAlive = enemies.length;
                 if (gameState.towerHealth <= 0) { gameState.towerHealth = 0; finishRound(false); }
             }
-            */
 
             particles.forEach(p => { p.update(); p.draw(); }); particles = particles.filter(p => p.alpha > 0);
             spiralGolds.forEach(g => { g.update(); g.draw(); }); spiralGolds = spiralGolds.filter(g => g.alive);
             damageTexts.forEach(t => { t.update(); t.draw(); }); damageTexts = damageTexts.filter(t => t.alpha > 0);
 
+             /* Esto dibuja el area de impacto alrededor del mouse
             if (gameState.isRoundActive) {
                 ctx.beginPath(); ctx.arc(gameState.mouseX, gameState.mouseY, upgrades.radius.value, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(0, 210, 211, 0.15)'; ctx.lineWidth = 1.5; ctx.stroke();
             }
-
+            */
             ctx.restore(); 
             requestAnimationFrame(loop);
         }
-
+        
         document.getElementById('start-game-btn').onclick = () => { startRound(); };
         document.getElementById('next-round-btn').onclick = () => { startRound(); };
 
