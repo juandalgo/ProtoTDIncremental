@@ -441,7 +441,7 @@
                 const dx = this.x - centerX;
                 const dy = this.y - centerY;
                 const angle = Math.atan2(dy, dx);
-                const shadowLength = Math.max(canvas.width, canvas.height) * 1.5;
+                const shadowLength = 500;                           //Math.max(canvas.width, canvas.height) * 1.5;
                 const widthOffset = this.radius * 1.1;
 
                 ctx.save();
