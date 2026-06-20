@@ -225,10 +225,13 @@
         };
 
         const upgrades = {
-            dps: { name: "Daño Base", cost: 10, baseCost: 10, level: 1, scale: 1.4, value: 10, inc: 6, unlocked: true, desc: "Más daño por cada pulso" },
-            atkSpeed: { name: "Frecuencia", cost: 15, baseCost: 15, level: 1, scale: 1.5, value: 1.2, inc: 0.3, unlocked: true, desc: "Ataques por segundo" },
-            radius: { name: "Radio del Pulso", cost: 25, baseCost: 25, level: 1, scale: 1.4, value: 60, inc: 15, unlocked: true, desc: "Área de efecto del pulso" },
+            dps: { name: "Daño Balas", cost: 10, baseCost: 10, level: 1, scale: 1.4, value: 10, inc: 6, unlocked: true, desc: "Incrementa el daño de cada proyectil" },
+            atkSpeed: { name: "Frecuencia", cost: 15, baseCost: 15, level: 1, scale: 1.5, value: 1.5, inc: 0.4, unlocked: true, desc: "Proyectiles disparados por segundo" },
+            // Reemplazamos el antiguo radio por velocidad/penetración o un modificador útil:
+            pierceChance: { name: "Calibre Pesado", cost: 30, baseCost: 30, level: 1, scale: 1.5, value: 0, inc: 5, unlocked: true, desc: "Aumenta la fuerza de impacto cinético" }, 
             roundTime: { name: "Duración Ronda", cost: 30, baseCost: 30, level: 1, scale: 1.4, value: 20, inc: 5, unlocked: true, desc: "Aumenta el tiempo de la ronda (+5s)" },
+            // NUEVO ATAQUE DESBLOQUEABLE:
+            unlockMultishot: { name: "Disparo Triple", cost: 200, baseCost: 200, level: 0, scale: 1, value: 0, inc: 1, unlocked: false, isUnlock: true, desc: "Desbloquea 2 proyectiles laterales de apoyo" },
             unlockBomb: { name: "Hormona Volátil", cost: 150, baseCost: 150, level: 0, scale: 1, value: 0, inc: 1, unlocked: false, isUnlock: true, desc: "Desbloquea Enemigos Bomba (Explotan)" },
             unlockElectric: { name: "Célula de Rayos", cost: 250, baseCost: 250, level: 0, scale: 1, value: 0, inc: 1, unlocked: false, isUnlock: true, desc: "Desbloquea Enemigos Electrificados (Rayos)" }
         };
