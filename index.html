@@ -5,9 +5,11 @@
 <title>Horde Cleaver v3</title>
 <style>
 *{box-sizing:border-box;user-select:none;}
-body{margin:0;padding:0;background:#0b0e14;color:#e2e8f0;font-family:'Courier New',monospace;overflow:hidden;display:flex;height:100vh;}
-#game-container{position:relative;flex-grow:1;height:100vh;background:radial-gradient(circle,#1a1f2c 0%,#0b0e14 100%);cursor:crosshair;}
-canvas{display:block;width:100%;height:100%;}
+body{margin:0;padding:0;background:#0b0e14;color:#e2e8f0;font-family:'Courier New',monospace;overflow:hidden;display:flex;height:100vh;cursor:none;}
+#game-container{position:relative;flex-grow:1;height:100vh;background:radial-gradient(circle,#1a1f2c 0%,#0b0e14 100%);cursor:none;}
+canvas{display:block;width:100%;height:100%;cursor:none;}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(11,14,20,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:25;text-align:center;padding:20px;cursor:none;}
+.start-btn{cursor:none;}
 #hud{position:absolute;top:16px;left:16px;pointer-events:none;text-shadow:2px 2px 4px rgba(0,0,0,.8);z-index:20;}
 .hud-row{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;}
 .stat{font-size:1.1rem;font-weight:bold;}
@@ -38,10 +40,10 @@ canvas{display:block;width:100%;height:100%;}
 .up-name{font-weight:bold;font-size:.82rem;color:#ff9ff3;}
 .up-desc{font-size:.65rem;color:#a4b0be;margin-top:1px;}
 .up-cost{font-weight:bold;color:#ffd700;font-size:.9rem;white-space:nowrap;}
-.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(11,14,20,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:25;text-align:center;padding:20px;}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(11,14,20,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:25;text-align:center;padding:20px;cursor:none;}
 .overlay h1{font-size:2.2rem;margin-bottom:8px;}
 .overlay p{font-size:1rem;margin-bottom:8px;color:#a4b0be;}
-.start-btn{background:#10ac84;color:#fff;border:none;padding:11px 32px;font-size:1.2rem;font-weight:bold;border-radius:8px;cursor:pointer;margin-top:8px;}
+.start-btn{background:#10ac84;color:#fff;border:none;padding:11px 32px;font-size:1.2rem;font-weight:bold;border-radius:8px;cursor:none;margin-top:8px;}
 .start-btn:hover{background:#1dd1a1;}
 .hidden{display:none!important;}
 #round-stats-box{display:flex;gap:14px;margin:8px 0 14px;flex-wrap:wrap;justify-content:center;}
@@ -53,6 +55,7 @@ canvas{display:block;width:100%;height:100%;}
 #diff-bar-wrap{position:absolute;bottom:14px;left:14px;width:calc(100% - 28px);height:8px;background:#1c202c;border-radius:4px;overflow:hidden;z-index:20;}
 #diff-bar{height:100%;width:0%;background:linear-gradient(90deg,#2ed573,#ff4757);}
 #crit-zone-indicator{position:absolute;pointer-events:none;border:2px dashed rgba(255,210,0,.4);border-radius:50%;display:none;z-index:15;}
+#custom-cursor{position:fixed;top:0;left:0;width:32px;height:32px;margin-left:-16px;margin-top:-16px;pointer-events:none;z-index:50;}
 </style>
 </head>
 <body>
@@ -104,6 +107,17 @@ canvas{display:block;width:100%;height:100%;}
   <div style="text-align:center;font-size:.7rem;color:#57606f;border-top:1px solid #232b3e;padding:6px;">v3.0</div>
 </div>
 
+<div id="custom-cursor">
+  <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <line x1="2" y1="16" x2="30" y2="16" stroke="rgba(0,0,0,0.7)" stroke-width="3"/>
+    <line x1="16" y1="2" x2="16" y2="30" stroke="rgba(0,0,0,0.7)" stroke-width="3"/>
+    <line x1="3" y1="16" x2="29" y2="16" stroke="#00d2d3" stroke-width="2"/>
+    <line x1="16" y1="3" x2="16" y2="29" stroke="#00d2d3" stroke-width="2"/>
+    <circle id="cc-pulse" cx="16" cy="16" r="11" fill="none" stroke="rgba(0,210,211,0.5)" stroke-width="1.5"/>
+    <circle cx="16" cy="16" r="2.5" fill="#fff"/>
+  </svg>
+</div>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -132,7 +146,6 @@ let G = {
 // ── UPGRADES ────────────────────────────────────────────────────────────────
 const U = {
   // ── ACTIVAS ──
-  // A: Base (sin penetración)
   baseDmg:      {tab:'active',cat:'⚡ Arma Base',    name:'Daño Base',       cost:10,  bc:10,  lv:1,sc:1.4, v:12,  inc:8,    on:true,  desc:'Daño por bala'},
   baseRate:     {tab:'active',cat:'⚡ Arma Base',    name:'Cadencia Base',   cost:15,  bc:15,  lv:1,sc:1.5, v:1.5, inc:0.4,  on:true,  desc:'Disparos/s'},
   baseCount:    {tab:'active',cat:'⚡ Arma Base',    name:'Balas Paralelas', cost:50,  bc:50,  lv:1,sc:1.5, v:1,   inc:1,    on:true,  desc:'Proyectiles paralelos'},
@@ -140,46 +153,31 @@ const U = {
   unlockBounce: {tab:'active',cat:'⚡ Arma Base',    name:'Rebote',          cost:80,  bc:80,  lv:0,sc:1.6, v:0,   inc:1,    on:false, isUnlock:true, desc:'Rebotes del proyectil al impactar'},
   baseBounce:   {tab:'active',cat:'⚡ Arma Base',    name:'Rebotes (+1)',    cost:100, bc:100, lv:1,sc:1.7, v:0,   inc:1,    on:false, isWeapon:'Bounce', desc:'Número de rebotes'},
 
-  // B: Escopeta
   unlockShotgun:{tab:'active',cat:'🔫 Escopeta',     name:'Desbloquear',     cost:120, bc:120, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Disparo en abanico'},
   sgDmg:        {tab:'active',cat:'🔫 Escopeta',     name:'Daño',            cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Shotgun', desc:'Daño por perdigón'},
   sgCount:      {tab:'active',cat:'🔫 Escopeta',     name:'Perdigones',      cost:50,  bc:50,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Shotgun', desc:'Perdigones por disparo'},
   sgRate:       {tab:'active',cat:'🔫 Escopeta',     name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.7, inc:0.2,  on:false, isWeapon:'Shotgun', desc:'Disparos/s'},
-  unlockVoltArc:{tab:'active',cat:'🔫 Escopeta',     name:'Arco Voltaico',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayos entre perdigones al disparar'},
+  unlockVoltArc:{tab:'active',cat:'🔫 Escopeta',     name:'Arco Voltaico',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Arco eléctrico continuo entre perdigones cercanos, daña a quien lo atraviesa'},
+  voltArcDmg:   {tab:'active',cat:'🔫 Escopeta',     name:'Daño Arco',       cost:55,  bc:55,  lv:1,sc:1.5, v:10,  inc:7,    on:false, isWeapon:'VoltArc', desc:'Daño/s del arco eléctrico'},
+  voltArcRange: {tab:'active',cat:'🔫 Escopeta',     name:'Alcance Arco',    cost:50,  bc:50,  lv:1,sc:1.4, v:110, inc:25,   on:false, isWeapon:'VoltArc', desc:'Distancia máx. entre perdigones para formar arco'},
 
-  // C: Francotirador
   unlockSniper: {tab:'active',cat:'🎯 Francotirador',name:'Desbloquear',     cost:150, bc:150, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Alto daño, gran penetración'},
   snDmg:        {tab:'active',cat:'🎯 Francotirador',name:'Daño',            cost:70,  bc:70,  lv:1,sc:1.5, v:80,  inc:50,   on:false, isWeapon:'Sniper', desc:'Daño por disparo'},
   snRate:       {tab:'active',cat:'🎯 Francotirador',name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.5, inc:0.25, on:false, isWeapon:'Sniper', desc:'Disparos/s'},
   snPierce:     {tab:'active',cat:'🎯 Francotirador',name:'Perforación',     cost:55,  bc:55,  lv:1,sc:1.5, v:5,   inc:5,    on:false, isWeapon:'Sniper', desc:'Enemigos atravesados'},
 
-  // D: Lanza Granadas
   unlockGrenade:{tab:'active',cat:'💣 Lanza Granadas',name:'Desbloquear',    cost:180, bc:180, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Granada con explosión retardada'},
   grDmg:        {tab:'active',cat:'💣 Lanza Granadas',name:'Daño',           cost:65,  bc:65,  lv:1,sc:1.5, v:60,  inc:30,   on:false, isWeapon:'Grenade', desc:'Daño de explosión'},
   grRadius:     {tab:'active',cat:'💣 Lanza Granadas',name:'Radio',          cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:25,   on:false, isWeapon:'Grenade', desc:'Radio explosión'},
   grRate:       {tab:'active',cat:'💣 Lanza Granadas',name:'Cadencia',       cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Grenade', desc:'Granadas/s'},
   grRange:      {tab:'active',cat:'💣 Lanza Granadas',name:'Alcance',        cost:50,  bc:50,  lv:1,sc:1.4, v:220, inc:50,   on:false, isWeapon:'Grenade', desc:'Distancia máx de lanzamiento'},
 
-  // E: Misil Teledirigido
-  unlockMissile:{tab:'active',cat:'🚀 Misil',        name:'Desbloquear',     cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Misil homing que explota en área'},
-  missileDmg:   {tab:'active',cat:'🚀 Misil',        name:'Daño Explosión',  cost:70,  bc:70,  lv:1,sc:1.5, v:60,  inc:35,   on:false, isWeapon:'Missile', desc:'Daño en el área de explosión'},
-  missileRadius:{tab:'active',cat:'🚀 Misil',        name:'Radio Explosión', cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Missile', desc:'Radio del área de explosión'},
-  missileRate:  {tab:'active',cat:'🚀 Misil',        name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Missile', desc:'Misiles/s'},
-
-  // F: Rayo Láser
-  unlockLaser:  {tab:'active',cat:'🔴 Rayo Láser',   name:'Desbloquear',     cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo continuo al enemigo más cercano'},
-  laserDps:     {tab:'active',cat:'🔴 Rayo Láser',   name:'DPS',             cost:75,  bc:75,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Laser', desc:'Daño/s del rayo'},
-  laserRange:   {tab:'active',cat:'🔴 Rayo Láser',   name:'Alcance',         cost:55,  bc:55,  lv:1,sc:1.4, v:200, inc:60,   on:false, isWeapon:'Laser', desc:'Distancia máxima del rayo'},
-  laserChain:   {tab:'active',cat:'🔴 Rayo Láser',   name:'Encadenado',      cost:100, bc:100, lv:1,sc:1.6, v:1,   inc:1,    on:false, isWeapon:'Laser', desc:'Enemigos encadenados a la vez'},
-
   // ── PASIVAS ──
-  // G: Aura
   auraOn:       {tab:'passive',cat:'🌀 Aura de Daño', name:'Desbloquear',    cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Daño área alrededor de la torre'},
   auraDmg:      {tab:'passive',cat:'🌀 Aura de Daño', name:'DPS Aura',       cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Aura', desc:'Daño/s del aura'},
   auraRadius:   {tab:'passive',cat:'🌀 Aura de Daño', name:'Radio',          cost:50,  bc:50,  lv:1,sc:1.4, v:100, inc:30,   on:false, isWeapon:'Aura', desc:'Radio del aura'},
   auraFreq:     {tab:'passive',cat:'🌀 Aura de Daño', name:'Frecuencia',     cost:45,  bc:45,  lv:1,sc:1.5, v:4,   inc:2,    on:false, isWeapon:'Aura', desc:'Pulsos/s'},
 
-  // H: Drones (patrulla libre)
   droneOn:      {tab:'passive',cat:'🤖 Drones',        name:'Desbloquear',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Drones que patrullan y atacan enemigos'},
   droneCount:   {tab:'passive',cat:'🤖 Drones',        name:'Número',        cost:90,  bc:90,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Drone', desc:'Drones activos'},
   droneDmg:     {tab:'passive',cat:'🤖 Drones',        name:'Daño',          cost:70,  bc:70,  lv:1,sc:1.5, v:12,  inc:10,   on:false, isWeapon:'Drone', desc:'Daño por ataque de drone'},
@@ -187,23 +185,34 @@ const U = {
   droneRate:    {tab:'passive',cat:'🤖 Drones',        name:'Cadencia',      cost:60,  bc:60,  lv:1,sc:1.5, v:1.5, inc:0.5,  on:false, isWeapon:'Drone', desc:'Ataques/s por drone'},
   droneSpeed:   {tab:'passive',cat:'🤖 Drones',        name:'Velocidad',     cost:40,  bc:40,  lv:1,sc:1.4, v:80,  inc:30,   on:false, isWeapon:'Drone', desc:'Velocidad de movimiento del drone'},
 
-  // I: Órbita
   unlockOrbit:  {tab:'passive',cat:'🔵 Esferas Órbita',name:'Desbloquear',   cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Esferas que orbitan la torre destruyendo enemigos'},
   orbitCount:   {tab:'passive',cat:'🔵 Esferas Órbita',name:'Nº Esferas',    cost:90,  bc:90,  lv:1,sc:1.5, v:3,   inc:1,    on:false, isWeapon:'Orbit', desc:'Esferas en órbita'},
   orbitDmg:     {tab:'passive',cat:'🔵 Esferas Órbita',name:'Daño',          cost:70,  bc:70,  lv:1,sc:1.5, v:20,  inc:15,   on:false, isWeapon:'Orbit', desc:'Daño por impacto de esfera'},
   orbitRadius:  {tab:'passive',cat:'🔵 Esferas Órbita',name:'Radio Órbita',  cost:60,  bc:60,  lv:1,sc:1.4, v:80,  inc:20,   on:false, isWeapon:'Orbit', desc:'Distancia de las esferas a la torre'},
   orbitSpeed:   {tab:'passive',cat:'🔵 Esferas Órbita',name:'Velocidad',     cost:50,  bc:50,  lv:1,sc:1.4, v:1.8, inc:0.5,  on:false, isWeapon:'Orbit', desc:'Velocidad de rotación'},
 
-  // J: Línea de Fuego
-  firelineOn:   {tab:'passive',cat:'🔥 Línea de Fuego',name:'Desbloquear',   cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo de fuego a los bordes del mapa'},
-  firelineDmg:  {tab:'passive',cat:'🔥 Línea de Fuego',name:'Daño',          cost:65,  bc:65,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Fireline', desc:'Daño/s a enemigos en la línea'},
+  firelineOn:   {tab:'passive',cat:'🔥 Línea de Fuego',name:'Desbloquear',   cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo de fuego que quema y puede encadenar'},
+  firelineDmg:  {tab:'passive',cat:'🔥 Línea de Fuego',name:'Daño Fuego',    cost:65,  bc:65,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Fireline', desc:'Daño/s a enemigos en la línea'},
+  firelineBurn: {tab:'passive',cat:'🔥 Línea de Fuego',name:'Duración Quema',cost:50,  bc:50,  lv:1,sc:1.4, v:1.5, inc:0.5,  on:false, isWeapon:'Fireline', desc:'Segundos quemando tras salir de la línea'},
+  firelineChain:{tab:'passive',cat:'🔥 Línea de Fuego',name:'Explosión al morir',cost:90,bc:90,lv:0,sc:1.5, v:0,   inc:1,    on:false, isWeapon:'Fireline', isUpgUnlock:true, desc:'Enemigos quemados explotan en fuego al morir'},
   firelineFreq: {tab:'passive',cat:'🔥 Línea de Fuego',name:'Frecuencia',    cost:55,  bc:55,  lv:1,sc:1.5, v:1.0, inc:0.3,  on:false, isWeapon:'Fireline', desc:'Líneas/s'},
   firelineWidth:{tab:'passive',cat:'🔥 Línea de Fuego',name:'Grosor',        cost:45,  bc:45,  lv:1,sc:1.4, v:12,  inc:6,    on:false, isWeapon:'Fireline', desc:'Grosor de la línea (px)'},
 
-  // K: Zona Crítica
-  critOn:       {tab:'passive',cat:'🎯 Zona Crítica',  name:'Desbloquear',   cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Área de crítico alrededor del cursor'},
+  critOn:       {tab:'passive',cat:'🎯 Zona Crítica',  name:'Desbloquear',   cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Área de crítico y ralentización alrededor del cursor'},
   critRadius:   {tab:'passive',cat:'🎯 Zona Crítica',  name:'Radio',         cost:70,  bc:70,  lv:1,sc:1.5, v:70,  inc:25,   on:false, isWeapon:'Crit', desc:'Radio de la zona crítica'},
   critChance:   {tab:'passive',cat:'🎯 Zona Crítica',  name:'% Crítico',     cost:80,  bc:80,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Crit', desc:'Prob. crítico aumentada en zona'},
+  critSlow:     {tab:'passive',cat:'🎯 Zona Crítica',  name:'Ralentización', cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.1,  on:false, isWeapon:'Crit', desc:'Factor de ralentización en zona (0=parado)'},
+
+  // Misil y Laser movidos a pasivas
+  unlockMissile:{tab:'passive',cat:'🚀 Misil',        name:'Desbloquear',     cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Misil homing que explota en área'},
+  missileDmg:   {tab:'passive',cat:'🚀 Misil',        name:'Daño Explosión',  cost:70,  bc:70,  lv:1,sc:1.5, v:60,  inc:35,   on:false, isWeapon:'Missile', desc:'Daño en el área de explosión'},
+  missileRadius:{tab:'passive',cat:'🚀 Misil',        name:'Radio Explosión', cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Missile', desc:'Radio del área de explosión'},
+  missileRate:  {tab:'passive',cat:'🚀 Misil',        name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Missile', desc:'Misiles/s'},
+
+  unlockLaser:  {tab:'passive',cat:'🔴 Rayo Láser',   name:'Desbloquear',     cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo continuo al enemigo más cercano'},
+  laserDps:     {tab:'passive',cat:'🔴 Rayo Láser',   name:'DPS',             cost:75,  bc:75,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Laser', desc:'Daño/s del rayo'},
+  laserRange:   {tab:'passive',cat:'🔴 Rayo Láser',   name:'Alcance',         cost:55,  bc:55,  lv:1,sc:1.4, v:200, inc:60,   on:false, isWeapon:'Laser', desc:'Distancia máxima del rayo'},
+  laserChain:   {tab:'passive',cat:'🔴 Rayo Láser',   name:'Encadenado',      cost:100, bc:100, lv:1,sc:1.6, v:1,   inc:1,    on:false, isWeapon:'Laser', desc:'Enemigos encadenados a la vez'},
 
   // ── TORRE / MONEDAS / SOMBRAS ──
   towerHp:      {tab:'util',cat:'🛡 Torre',            name:'Vida Torre',    cost:35,  bc:35,  lv:1,sc:1.45,v:50,  inc:15,   on:true,  desc:'Vida máxima de la torre'},
@@ -211,9 +220,16 @@ const U = {
   coinRadius:   {tab:'util',cat:'🪙 Monedas',          name:'Radio Recogida',cost:45,  bc:45,  lv:1,sc:1.4, v:28,  inc:15,   on:true,  desc:'Radio de atracción con cursor'},
   tractorOn:    {tab:'util',cat:'🪙 Monedas',          name:'Rayo Tractor',  cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Atrae 1 moneda automáticamente'},
   tractorCount: {tab:'util',cat:'🪙 Monedas',          name:'Monedas/Rayo',  cost:80,  bc:80,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Tractor', desc:'Monedas atraídas por pulso'},
-  tractorFreq:  {tab:'util',cat:'🪙 Monedas',          name:'Frecuencia Tractor',cost:70,bc:70, lv:1,sc:1.5, v:0.3, inc:0.25, on:false, isWeapon:'Tractor', desc:'Pulsos de atracción/s (inicio: lento)'},
+  tractorFreq:  {tab:'util',cat:'🪙 Monedas',          name:'Frecuencia Tractor',cost:70,bc:70, lv:1,sc:1.5, v:0.3, inc:0.25, on:false, isWeapon:'Tractor', desc:'Pulsos de atracción/s'},
   unlockBomb:   {tab:'util',cat:'☣ Enemigos Especiales',name:'Hormona Volátil',cost:150,bc:150,lv:0,sc:1,  v:0,   inc:1,    on:false, isUnlock:true, desc:'Activa enemigos Bomba (explotan al morir)'},
+  bombRate:     {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Tasa Aparición Bomba',cost:60,bc:60,lv:1,sc:1.5,v:0.15,inc:0.05,on:false,isWeapon:'Bomb',desc:'Probabilidad de spawn de bomba'},
+  bombDmg:      {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Daño Explosión',cost:65,bc:65, lv:1,sc:1.5, v:1.0, inc:0.5,  on:false, isWeapon:'Bomb', desc:'Multiplicador de daño al explotar'},
+  bombRadius:   {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Radio Explosión',cost:55,bc:55,lv:1,sc:1.4, v:110, inc:30,   on:false, isWeapon:'Bomb', desc:'Radio de la explosión del bomba'},
   unlockElectric:{tab:'util',cat:'☣ Enemigos Especiales',name:'Célula de Rayos',cost:200,bc:200,lv:0,sc:1, v:0,   inc:1,    on:false, isUnlock:true, desc:'Activa enemigos Eléctricos (encadenan rayos)'},
+  elecRate:     {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Tasa Aparición Elec.',cost:60,bc:60,lv:1,sc:1.5,v:0.12,inc:0.04,on:false,isWeapon:'Electric',desc:'Probabilidad de spawn eléctrico'},
+  elecDmg:      {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Daño Rayo',    cost:65,  bc:65,  lv:1,sc:1.5, v:1.2, inc:0.4,  on:false, isWeapon:'Electric', desc:'Multiplicador de daño del rayo'},
+  elecRange:    {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Alcance Rayo', cost:55,  bc:55,  lv:1,sc:1.4, v:130, inc:30,   on:false, isWeapon:'Electric', desc:'Alcance del rayo al siguiente enemigo'},
+  elecChain:    {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Saltos Rayo',  cost:70,  bc:70,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Electric', desc:'Número de saltos entre enemigos'},
   eliteVacuum:  {tab:'util',cat:'🪙 Monedas',          name:'Vacío de Elite',cost:120, bc:120, lv:1,sc:1.6, v:0.20,inc:0.15, on:true,  desc:'% de atraer todas las monedas al matar un Elite'},
 };
 
@@ -221,18 +237,59 @@ const U = {
 let enemies=[], particles=[], damageTexts=[], goldCoins=[], lightningChains=[], projectiles=[], grenades=[], drones=[];
 let firelines=[], critZoneRadius=0;
 
+// ── GRID ESPACIAL ────────────────────────────────────────────────────────────
+// Con hordas de cientos/miles de enemigos, las búsquedas "enemigos cerca de X" dejan de ser
+// viables en O(n) repetido muchas veces por frame. Esta cuadrícula divide el mapa en celdas
+// y se reconstruye una vez por frame; las consultas solo recorren las celdas relevantes.
+const GRID_CELL=70;
+let enemyGrid=new Map();
+function gridKey(cx,cy){return cx+','+cy;}
+function buildEnemyGrid(){
+  enemyGrid=new Map();
+  for(let i=0;i<enemies.length;i++){
+    const e=enemies[i];
+    if(e.hp<=0) continue;
+    const gx=Math.floor(e.x/GRID_CELL), gy=Math.floor(e.y/GRID_CELL);
+    const k=gridKey(gx,gy);
+    let bucket=enemyGrid.get(k);
+    if(!bucket){bucket=[];enemyGrid.set(k,bucket);}
+    bucket.push(e);
+  }
+}
+// Devuelve enemigos vivos cuyo centro está dentro de `radius` de (x,y), consultando solo
+// las celdas que intersectan ese círculo en vez de recorrer el array completo.
+function getNearbyEnemies(x,y,radius){
+  const result=[];
+  const minGx=Math.floor((x-radius)/GRID_CELL), maxGx=Math.floor((x+radius)/GRID_CELL);
+  const minGy=Math.floor((y-radius)/GRID_CELL), maxGy=Math.floor((y+radius)/GRID_CELL);
+  for(let gx=minGx;gx<=maxGx;gx++){
+    for(let gy=minGy;gy<=maxGy;gy++){
+      const bucket=enemyGrid.get(gridKey(gx,gy));
+      if(bucket) for(let i=0;i<bucket.length;i++) result.push(bucket[i]);
+    }
+  }
+  return result;
+}
+
 function resizeCanvas(){
   canvas.width=canvas.parentElement.clientWidth;
   canvas.height=canvas.parentElement.clientHeight;
-  shadowCanvas.width=canvas.width; shadowCanvas.height=canvas.height;
+  // shadowCanvas a mitad de resolución: reduce el coste de GPU de compositing de sombras a 1/4
+  // sin pérdida visual perceptible (las sombras son formas borrosas sin detalle fino).
+  shadowCanvas.width=Math.ceil(canvas.width/2); shadowCanvas.height=Math.ceil(canvas.height/2);
 }
 window.addEventListener('resize',resizeCanvas); resizeCanvas();
 
-canvas.addEventListener('mousemove',(e)=>{
+const customCursor=document.getElementById('custom-cursor');
+document.addEventListener('mousemove',(e)=>{
+  customCursor.style.left=e.clientX+'px';
+  customCursor.style.top=e.clientY+'px';
   const r=canvas.getBoundingClientRect();
+  G.cursorX=e.clientX-r.left;
+  G.cursorY=e.clientY-r.top;
   const cx=canvas.width/2, cy=canvas.height/2;
-  G.mouseX=cx+(e.clientX-r.left-cx)/G.cameraZoom;
-  G.mouseY=cy+(e.clientY-r.top-cy)/G.cameraZoom;
+  G.mouseX=cx+(G.cursorX-cx)/G.cameraZoom;
+  G.mouseY=cy+(G.cursorY-cy)/G.cameraZoom;
   const rad=U.coinRadius.v;
   goldCoins.forEach(c=>{
     if(c.phase==='float'){
@@ -241,6 +298,13 @@ canvas.addEventListener('mousemove',(e)=>{
     }
   });
 });
+// Pulso del cursor independiente del estado del juego (menú, tienda, ronda activa)
+(function cursorPulseLoop(ts){
+  const pulse=0.5+0.5*Math.sin(ts*0.005);
+  const ring=document.getElementById('cc-pulse');
+  if(ring){ ring.setAttribute('r',8+pulse*3); ring.setAttribute('stroke-opacity',0.3+pulse*0.3); }
+  requestAnimationFrame(cursorPulseLoop);
+})(0);
 
 // ── CLASES ──────────────────────────────────────────────────────────────────
 class Enemy{
@@ -248,53 +312,79 @@ class Enemy{
     if(fx!=null&&fy!=null){
       this.x=fx+(Math.random()*40-20); this.y=fy+(Math.random()*40-20);
     }else{
-      const side=Math.floor(Math.random()*4);
-      if(side===0){this.x=Math.random()*canvas.width;this.y=-40;}
-      else if(side===1){this.x=canvas.width+40;this.y=Math.random()*canvas.height;}
-      else if(side===2){this.x=Math.random()*canvas.width;this.y=canvas.height+40;}
-      else{this.x=-40;this.y=Math.random()*canvas.height;}
+      // Spawn desde todas direcciones para dar sensación de estar rodeado
+      const angle=Math.random()*Math.PI*2;
+      const cx=canvas.width/2, cy=canvas.height/2;
+      const maxR=Math.max(canvas.width,canvas.height)*0.7;
+      this.x=cx+Math.cos(angle)*maxR; this.y=cy+Math.sin(angle)*maxR;
     }
     this.type=type; this.isBoss=isBoss; this.isElite=isElite;
-    // Escala por nivel de dificultad
-    const lvScale=Math.pow(1.20,gameLevel-1);
-    const cv=Math.floor(Math.random()*40)-20;
+    this.burnTimer=0; // tiempo restante quemando
+    this.slowTimer=0; // tiempo restante ralentizado por zona crítica
+    const lvScale=Math.pow(3.0,gameLevel-1);
+    // Variación de tamaño y color por unidad
+    const sv=0.75+Math.random()*0.5;  // 0.75x a 1.25x de radio
+    const cv=Math.floor(Math.random()*50)-25; // variación de color ±25
     if(isBoss){
-      this.radius=42; this.speed=0.9; this.color='#c44569';
-      this.maxHp=800*lvScale; this.goldReward=Math.ceil(100*lvScale);
-      this.dmgToTower=50; this.attackTimer=0; this.attackRate=1.5;
+      this.radius=62+Math.floor(Math.random()*10); this.speed=0.85; this.color='#c44569';
+      this.maxHp=1800*lvScale; this.goldReward=Math.ceil(150*lvScale);
+      this.dmgToTower=60; this.attackTimer=0; this.attackRate=1.2;
+      this.orbitR=160+Math.random()*40; this.orbitA=Math.random()*Math.PI*2; this.orbitDir=Math.random()<.5?1:-1;
+      this.reaching=true; // primero llega a la órbita, luego orbita
     }else if(isElite){
-      this.radius=20; this.speed=1.0+Math.random()*0.4; this.color=`rgb(${180+cv},${50+cv},${220+cv})`;
+      this.radius=Math.floor(18*sv+4); this.speed=1.0+Math.random()*0.4; this.color=`rgb(${180+cv},${50+cv},${220+cv})`;
       this.maxHp=150*lvScale; this.goldReward=Math.ceil(25*lvScale);
       this.dmgToTower=15;
     }else{
       switch(type){
-        case'base':    this.radius=6;  this.speed=2.2+Math.random()*.5; this.color=`rgb(${230+cv},${40+cv},40)`;  this.maxHp=8*lvScale;  this.goldReward=Math.ceil(2*Math.pow(1.1,gameLevel-1)); this.dmgToTower=5;  break;
-        case'armored': this.radius=12; this.speed=0.6+Math.random()*.2; this.color=`rgb(${230+cv},${120+cv},30)`;this.maxHp=55*lvScale; this.goldReward=Math.ceil(8*Math.pow(1.1,gameLevel-1)); this.dmgToTower=20; break;
-        case'nest':    this.radius=18; this.speed=1.2;                   this.color=`rgb(${130+cv},40,${190+cv})`;this.maxHp=100*lvScale;this.goldReward=Math.ceil(20*Math.pow(1.1,gameLevel-1));this.dmgToTower=30;
+        case'base':    this.radius=Math.floor(5*sv+2);  this.speed=2.2+Math.random()*.5; this.color=`rgb(${220+cv},${35+cv},35)`;   this.maxHp=8*lvScale;   this.goldReward=Math.ceil(2*Math.pow(1.1,gameLevel-1));  this.dmgToTower=5;  break;
+        case'armored': this.radius=Math.floor(10*sv+4); this.speed=0.6+Math.random()*.2; this.color=`rgb(${220+cv},${110+cv},25)`;  this.maxHp=55*lvScale;  this.goldReward=Math.ceil(8*Math.pow(1.1,gameLevel-1));  this.dmgToTower=20; break;
+        case'nest':    this.radius=Math.floor(16*sv+4); this.speed=1.2;                   this.color=`rgb(${120+cv},35,${180+cv})`; this.maxHp=100*lvScale; this.goldReward=Math.ceil(20*Math.pow(1.1,gameLevel-1)); this.dmgToTower=30;
           this.orR=Math.min(canvas.width,canvas.height)*.25; this.orA=0; this.orDir=Math.random()<.5?1:-1; this.spawnT=0; this.spawnCD=2.5; break;
-        case'bomb':    this.radius=9;  this.speed=1.4;                   this.color=`rgb(${210+cv},${190+cv},20)`;this.maxHp=20*lvScale; this.goldReward=Math.ceil(5*Math.pow(1.1,gameLevel-1)); this.dmgToTower=8;
+        case'bomb':    this.radius=Math.floor(8*sv+3);  this.speed=1.4;                   this.color=`rgb(${200+cv},${180+cv},15)`;  this.maxHp=20*lvScale;  this.goldReward=Math.ceil(5*Math.pow(1.1,gameLevel-1));  this.dmgToTower=8;
           this.srR=Math.sqrt((this.x-canvas.width/2)**2+(this.y-canvas.height/2)**2); this.srA=Math.atan2(this.y-canvas.height/2,this.x-canvas.width/2); break;
-        case'electric':this.radius=8;  this.speed=1.6;                   this.color=`rgb(0,${190+cv},${220+cv})`;  this.maxHp=16*lvScale; this.goldReward=Math.ceil(6*Math.pow(1.1,gameLevel-1)); this.dmgToTower=7;  break;
-        default:       this.radius=6;  this.speed=2;                     this.color='#ff4757'; this.maxHp=8*lvScale; this.goldReward=2; this.dmgToTower=5;
+        case'electric':this.radius=Math.floor(7*sv+3);  this.speed=1.6;                   this.color=`rgb(0,${180+cv},${210+cv})`;  this.maxHp=16*lvScale;  this.goldReward=Math.ceil(6*Math.pow(1.1,gameLevel-1));  this.dmgToTower=7;  break;
+        default:       this.radius=6; this.speed=2; this.color='#ff4757'; this.maxHp=8*lvScale; this.goldReward=2; this.dmgToTower=5;
       }
     }
-    this.hp=this.maxHp; this.critMult=1;
+    this.hp=this.maxHp; this.critMult=1; this.baseSpeed=this.speed;
   }
   update(tx,ty,dt){
+    // Slow de zona crítica
+    const inCrit=U.critOn.on&&Math.sqrt((this.x-G.mouseX)**2+(this.y-G.mouseY)**2)<U.critRadius.v;
+    const slowFactor=inCrit?(1-U.critSlow.v):1;
+    this.speed=this.baseSpeed*slowFactor;
+
+    // Quemadura
+    if(this.burnTimer>0){
+      this.burnTimer-=dt;
+      this.hp-=U.firelineDmg.v*dt*0.5; // daño adicional mientras quema
+    }
+
     const dx=tx-this.x, dy=ty-this.y, dist=Math.sqrt(dx*dx+dy*dy);
-    if(this.isBoss||this.isElite){
-      if(dist>5){this.x+=(dx/dist)*this.speed;this.y+=(dy/dist)*this.speed;}
-      if(this.isBoss){
-        this.attackTimer+=dt;
-        if(this.attackTimer>=this.attackRate){
-          this.attackTimer=0;
-          // Jefe dispara proyectiles en estrella
-          for(let i=0;i<8;i++){
-            const a=i*Math.PI/4;
-            bossProjectiles.push({x:this.x,y:this.y,vx:Math.cos(a)*3,vy:Math.sin(a)*3,alive:true,r:8});
-          }
+    if(this.isBoss){
+      if(this.reaching){
+        // Avanzar hasta alcanzar la distancia de órbita
+        if(dist>this.orbitR+5){this.x+=(dx/dist)*this.speed;this.y+=(dy/dist)*this.speed;}
+        else{this.reaching=false; this.orbitA=Math.atan2(this.y-ty,this.x-tx);}
+      }else{
+        // Orbitar permanentemente
+        this.orbitA+=dt*(this.speed/this.orbitR)*this.orbitDir;
+        this.x=tx+Math.cos(this.orbitA)*this.orbitR;
+        this.y=ty+Math.sin(this.orbitA)*this.orbitR;
+      }
+      this.attackTimer+=dt;
+      if(this.attackTimer>=this.attackRate){
+        this.attackTimer=0;
+        for(let i=0;i<10;i++){
+          const a=i*Math.PI/5+(this.orbitA*0.5);
+          bossProjectiles.push({x:this.x,y:this.y,vx:Math.cos(a)*3.5,vy:Math.sin(a)*3.5,alive:true,r:9});
         }
       }
+      return dist;
+    }
+    if(this.isElite){
+      if(dist>5){this.x+=(dx/dist)*this.speed;this.y+=(dy/dist)*this.speed;}
       return dist;
     }
     if(this.type==='nest'){
@@ -312,19 +402,23 @@ class Enemy{
     return dist;
   }
   draw(){
+    // Flash de quemadura
+    const burnFlash=this.burnTimer>0&&Math.sin(Date.now()*0.02)>0;
     ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
     if(this.isBoss){
-      ctx.fillStyle='#c44569'; ctx.shadowColor='#ff6b81'; ctx.shadowBlur=20; ctx.fill(); ctx.shadowBlur=0;
-      ctx.strokeStyle='#ff6b81'; ctx.lineWidth=3; ctx.stroke();
-      // Barra de vida del jefe siempre visible
+      ctx.fillStyle=burnFlash?'#ff9f43':'#c44569'; ctx.shadowColor='#ff6b81'; ctx.shadowBlur=25; ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle='#ff6b81'; ctx.lineWidth=4; ctx.stroke();
+      // Anillo exterior del jefe
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.radius+8,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,107,129,0.3)'; ctx.lineWidth=3; ctx.stroke();
       const bw=this.radius*3;
-      ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(this.x-bw/2,this.y-this.radius-12,bw,6);
-      ctx.fillStyle='#ff4757'; ctx.fillRect(this.x-bw/2,this.y-this.radius-12,bw*(this.hp/this.maxHp),6);
+      ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw,8);
+      ctx.fillStyle='#ff4757'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw*(this.hp/this.maxHp),8);
     }else if(this.isElite){
-      ctx.fillStyle=this.color; ctx.shadowColor='#e056fd'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle=burnFlash?'#ff9f43':this.color; ctx.shadowColor='#e056fd'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
       ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.stroke();
     }else{
-      ctx.fillStyle=this.color; ctx.fill();
+      ctx.fillStyle=burnFlash?'#ff7f50':this.color; ctx.fill();
       if(this.type==='nest'){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
       else if(this.type==='bomb'){ctx.beginPath();ctx.arc(this.x,this.y,this.radius*.4,0,Math.PI*2);ctx.fillStyle='#1e272e';ctx.fill();}
       else if(this.type==='electric'){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();}
@@ -333,6 +427,11 @@ class Enemy{
       const bw=this.radius*2;
       ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(this.x-this.radius,this.y-this.radius-6,bw,3);
       ctx.fillStyle='#2ed573'; ctx.fillRect(this.x-this.radius,this.y-this.radius-6,bw*(this.hp/this.maxHp),3);
+    }
+    // Indicador de quemadura
+    if(this.burnTimer>0){
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.radius+3,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(255,140,0,${Math.min(0.8,this.burnTimer/2)})`; ctx.lineWidth=2; ctx.stroke();
     }
   }
 }
@@ -391,7 +490,9 @@ class Grenade{
     this.alive=false;
     for(let i=0;i<22;i++) particles.push(new Particle(this.x,this.y,'#ff9f43',1.7));
     G.screenShake=Math.max(G.screenShake,9);
-    enemies.forEach(e=>{
+    const nearby=getNearbyEnemies(this.x,this.y,this.radius);
+    for(let i=0;i<nearby.length;i++){
+      const e=nearby[i];
       if(e.hp>0){
         const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);
         if(d<=this.radius){
@@ -399,7 +500,7 @@ class Grenade{
           dealDamage(e,dmg,'💥');
         }
       }
-    });
+    }
   }
   draw(){
     ctx.save();
@@ -432,7 +533,8 @@ class Drone{
     this.wanderTimer+=dt;
     let chaseTarget=null;
     let bd=U.droneRange.v;
-    enemies.forEach(e=>{if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bd){bd=d;chaseTarget=e;}}});
+    let nearby=getNearbyEnemies(this.x,this.y,bd);
+    for(let i=0;i<nearby.length;i++){const e=nearby[i];if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bd){bd=d;chaseTarget=e;}}}
 
     if(chaseTarget){
       // Moverse hacia el objetivo
@@ -460,7 +562,8 @@ class Drone{
     if(this.attackTimer>=rate){
       this.attackTimer=0;
       let best=null, bbd=U.droneRange.v;
-      enemies.forEach(e=>{if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bbd){bbd=d;best=e;}}});
+      const atkNearby=getNearbyEnemies(this.x,this.y,bbd);
+      for(let i=0;i<atkNearby.length;i++){const e=atkNearby[i];if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bbd){bbd=d;best=e;}}}
       if(best){
         dealDamage(best,U.droneDmg.v,'🤖');
         lightningChains.push({x1:this.x,y1:this.y,x2:best.x,y2:best.y,alpha:1,color:'#74b9ff'});
@@ -495,6 +598,8 @@ class GoldCoin{
     if(this.phase==='float'){
       this.floatT+=dt;
       this.y=this.baseY+Math.sin(this.floatT*3+this.bob)*5;
+      // Auto-recoger tras 6s flotando para evitar acumulación ilimitada con hordas masivas
+      if(this.floatT>6) this.phase='fly';
     }else{
       this.floatT+=dt; this.flyP+=dt/this.flyDur;
       if(this.flyP>=1){this.flyP=1;this.alive=false;collectCoin(this.value);}
@@ -513,12 +618,16 @@ class GoldCoin{
   }
 }
 
+const MAX_PARTICLES=600;
+const MAX_DAMAGE_TEXTS=80;
+const MAX_GOLDCOINS=400;
+
 class Particle{
   constructor(x,y,color,sm=1){
     this.x=x; this.y=y;
     const a=Math.random()*Math.PI*2, sp=(Math.random()*4+2)*sm;
     this.vx=Math.cos(a)*sp; this.vy=Math.sin(a)*sp;
-    this.r=(Math.random()*3+1)*sm; this.alpha=1; this.decay=Math.random()*.03+.02; this.color=color;
+    this.r=(Math.random()*3+1)*sm; this.alpha=1; this.decay=Math.random()*.06+.04; this.color=color;
   }
   update(){this.x+=this.vx;this.y+=this.vy;this.alpha-=this.decay;}
   draw(){ctx.save();ctx.globalAlpha=this.alpha;ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.color;ctx.fill();ctx.restore();}
@@ -571,14 +680,26 @@ function checkDeath(enemy){
     for(let i=0;i<40;i++) particles.push(new Particle(enemy.x,enemy.y,'#ffd700',2));
     bossEnemy=null;
     document.getElementById('boss-bar-wrap').style.display='none';
-    finishRound(true); // victoria
+    finishRound(true);
     return;
   }
   if(enemy.isElite){
-    // Elite vacuum
     if(Math.random()<U.eliteVacuum.v){
       goldCoins.forEach(c=>{if(c.phase==='float') c.phase='fly';});
       damageTexts.push(new DamageText(enemy.x,enemy.y,'⭐ VACÍO!','#ffd700'));
+    }
+  }
+  // Explosión de fuego si muere quemado y la mejora está activa
+  if(enemy.burnTimer>0&&U.firelineChain&&U.firelineChain.v>0){
+    const fireR=80;
+    for(let i=0;i<15;i++) particles.push(new Particle(enemy.x,enemy.y,'#ff7043',1.5));
+    const nearby=getNearbyEnemies(enemy.x,enemy.y,fireR);
+    for(let i=0;i<nearby.length;i++){
+      const e=nearby[i];
+      if(e.hp>0){
+        const d=Math.sqrt((e.x-enemy.x)**2+(e.y-enemy.y)**2);
+        if(d<=fireR){dealDamage(e,U.firelineDmg.v*2,'🔥');e.burnTimer=Math.max(e.burnTimer,U.firelineBurn.v);}
+      }
     }
   }
   if(enemy.type==='bomb') triggerBomb(enemy.x,enemy.y);
@@ -586,50 +707,63 @@ function checkDeath(enemy){
 }
 
 function triggerBomb(ox,oy){
-  const r=110, dmg=U.baseDmg.v*2.5;
+  const r=U.unlockBomb.on?(U.bombRadius.v||110):110;
+  const dmg=U.baseDmg.v*2.5*(U.bombDmg?U.bombDmg.v:1);
   for(let i=0;i<25;i++) particles.push(new Particle(ox,oy,'#ff9f43',1.8));
   G.screenShake=Math.max(G.screenShake,8);
-  enemies.forEach(e=>{if(e.hp>0){const d=Math.sqrt((e.x-ox)**2+(e.y-oy)**2);if(d<=r) dealDamage(e,dmg,'💥');}});
+  const nearby=getNearbyEnemies(ox,oy,r);
+  for(let i=0;i<nearby.length;i++){const e=nearby[i];if(e.hp>0){const d=Math.sqrt((e.x-ox)**2+(e.y-oy)**2);if(d<=r) dealDamage(e,dmg,'💥');}}
 }
 
 function triggerLightning(ox,oy){
-  const maxR=130, dmg=U.baseDmg.v*1.2;
-  let cx=ox, cy=oy, left=[...enemies].filter(e=>e.hp>0), chains=5;
-  while(chains-->0&&left.length>0){
-    let best=null, bd=maxR, bi=-1;
-    left.forEach((e,i)=>{const d=Math.sqrt((e.x-cx)**2+(e.y-cy)**2);if(d<bd){bd=d;best=e;bi=i;}});
-    if(best){dealDamage(best,dmg,'⚡');lightningChains.push({x1:cx,y1:cy,x2:best.x,y2:best.y,alpha:1,color:'#00d2d3'});cx=best.x;cy=best.y;left.splice(bi,1);}
+  const maxR=U.unlockElectric.on?(U.elecRange?U.elecRange.v:130):130;
+  const chains=U.unlockElectric.on?(U.elecChain?U.elecChain.v:5):5;
+  const dmgMult=U.unlockElectric.on?(U.elecDmg?U.elecDmg.v:1.2):1.2;
+  const dmg=U.baseDmg.v*dmgMult;
+  let cx=ox, cy=oy, ch=chains;
+  const hit=new Set();
+  while(ch-->0){
+    const candidates=getNearbyEnemies(cx,cy,maxR);
+    let best=null, bd=maxR;
+    for(let i=0;i<candidates.length;i++){const e=candidates[i];if(e.hp>0&&!hit.has(e)){const d=Math.sqrt((e.x-cx)**2+(e.y-cy)**2);if(d<bd){bd=d;best=e;}}}
+    if(best){dealDamage(best,dmg,'⚡');lightningChains.push({x1:cx,y1:cy,x2:best.x,y2:best.y,alpha:1,color:'#00d2d3'});cx=best.x;cy=best.y;hit.add(best);}
     else break;
   }
 }
 
 // ── SPAWN ─────────────────────────────────────────────────────────────────────
+const MAX_ENEMIES_ALIVE=1500; // tope de seguridad: ya es una "mancha" total en pantalla
 function spawnSquad(){
+  if(enemies.length>=MAX_ENEMIES_ALIVE) return;
   // Spawn siempre (incluso si !G.isRoundActive para el inicio inmediato)
-  // Escala exponencial: cada 5s de difficultyTime duplica el tamaño de oleada
+  // Escala exponencial agresiva: el tamaño de horda crece sin techo con el tiempo vivido,
+  // hasta llenar la pantalla de enemigos (estilo "horda" tipo survivors).
   const t=G.difficultyTime;
-  const expScale=Math.pow(2, t/15);           // duplica cada 15s
-  const lvScale=Math.pow(1.5, gameLevel-1);   // escala adicional por nivel
-  const base=2+Math.random()*2;
-  const size=Math.max(1,Math.floor(base*expScale*lvScale));
+  const expScale=Math.pow(2, t/12);            // duplica cada 12s (antes 15s)
+  const lvScale=Math.pow(1.6, gameLevel-1);    // escala adicional por nivel
+  const base=4+Math.random()*3;
+  let size=Math.max(1,Math.floor(base*expScale*lvScale));
+  size=Math.min(size,MAX_ENEMIES_ALIVE-enemies.length);
 
-  let sx,sy;
-  const side=Math.floor(Math.random()*4);
-  if(side===0){sx=Math.random()*canvas.width;sy=-40;}
-  else if(side===1){sx=canvas.width+40;sy=Math.random()*canvas.height;}
-  else if(side===2){sx=Math.random()*canvas.width;sy=canvas.height+40;}
-  else{sx=-40;sy=Math.random()*canvas.height;}
+  const cx=canvas.width/2, cy=canvas.height/2;
+  const spawnR=Math.max(canvas.width,canvas.height)*0.65;
+  // Sector de aparición: un arco amplio centrado en un ángulo aleatorio, para que se note
+  // como "oleada" viniendo de una zona pero sin amontonarse en un único punto de 40px.
+  const sectorCenter=Math.random()*Math.PI*2;
+  const sectorWidth=Math.PI*0.7+Math.min(Math.PI*1.3,t*0.01); // el arco se ensancha con el tiempo
 
   for(let i=0;i<size;i++){
-    const r=Math.random();
+    const a=sectorCenter+(Math.random()-0.5)*sectorWidth;
+    const r=spawnR*(0.9+Math.random()*0.2);
+    const sx=cx+Math.cos(a)*r, sy=cy+Math.sin(a)*r;
+    const rr=Math.random();
     let type='base';
-    // Elites: probabilidad creciente con el tiempo, independiente del tipo
-    const isElite=(r<0.04+t*0.003)&&gameLevel>=2;
+    const isElite=(rr<0.04+t*0.003)&&gameLevel>=2;
     if(!isElite){
-      if(r<0.06&&t>20) type='nest';
-      else if(r<0.22&&t>5) type='armored';
-      else if(r<0.36&&U.unlockBomb.on) type='bomb';
-      else if(r<0.50&&U.unlockElectric.on) type='electric';
+      if(rr<0.06&&t>20) type='nest';
+      else if(rr<0.22&&t>5) type='armored';
+      else if(rr<0.22+(U.unlockBomb.on?U.bombRate.v:0)&&U.unlockBomb.on) type='bomb';
+      else if(rr<0.22+(U.unlockBomb.on?U.bombRate.v:0)+(U.unlockElectric.on?U.elecRate.v:0)&&U.unlockElectric.on) type='electric';
     }
     enemies.push(new Enemy(type,sx,sy,false,isElite));
   }
@@ -656,7 +790,8 @@ function spawnBoss(){
 function getAim(){
   const cx=canvas.width/2, cy=canvas.height/2;
   let best=null, bd=70;
-  enemies.forEach(e=>{if(e.hp>0){const d=Math.sqrt((e.x-G.mouseX)**2+(e.y-G.mouseY)**2);if(d<bd){bd=d;best=e;}}});
+  const nearby=getNearbyEnemies(G.mouseX,G.mouseY,bd);
+  for(let i=0;i<nearby.length;i++){const e=nearby[i];if(e.hp>0){const d=Math.sqrt((e.x-G.mouseX)**2+(e.y-G.mouseY)**2);if(d<bd){bd=d;best=e;}}}
   return best?{x:best.x,y:best.y}:{x:G.mouseX,y:G.mouseY};
 }
 
@@ -684,12 +819,42 @@ function fireShotgun(){
     const a=baseAngle-spread/2+spread/(cnt-1||1)*i+(Math.random()*.12-.06);
     const spd=11;
     pellets.push(new Projectile(cx,cy,Math.cos(a)*spd,Math.sin(a)*spd,U.sgDmg.v,4,'#fd79a8'));
+    pellets[pellets.length-1].isPellet=true;
     projectiles.push(pellets[pellets.length-1]);
   }
-  // Arco voltaico
-  if(U.unlockVoltArc.on&&pellets.length>=2){
-    for(let i=0;i<pellets.length-1;i++){
-      lightningChains.push({x1:pellets[i].x+pellets[i].vx*5,y1:pellets[i].y+pellets[i].vy*5,x2:pellets[i+1].x+pellets[i+1].vx*5,y2:pellets[i+1].y+pellets[i+1].vy*5,alpha:1,color:'#fd79a8'});
+  // El arco voltaico ahora es un efecto continuo gestionado por tickVoltArc() en el loop principal,
+  // que conecta perdigones cercanos entre sí mientras viajan y daña a los enemigos que atraviesan el arco.
+}
+
+// ── ARCO VOLTAICO (efecto continuo entre perdigones de escopeta) ──────────────
+function tickVoltArc(dt){
+  if(!U.unlockVoltArc.on) return;
+  const pellets=projectiles.filter(p=>p.isPellet&&p.alive);
+  if(pellets.length<2) return;
+  const range=U.voltArcRange.v;
+  const dps=U.voltArcDmg.v;
+  for(let i=0;i<pellets.length;i++){
+    for(let j=i+1;j<pellets.length;j++){
+      const p1=pellets[i], p2=pellets[j];
+      const dx=p2.x-p1.x, dy=p2.y-p1.y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<=range){
+        // Dibujar el arco (con un ligero desvío aleatorio para efecto eléctrico)
+        ctx.save(); ctx.beginPath(); ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo((p1.x+p2.x)/2+(Math.random()*8-4),(p1.y+p2.y)/2+(Math.random()*8-4));
+        ctx.lineTo(p2.x,p2.y);
+        ctx.strokeStyle='rgba(253,121,168,0.8)'; ctx.lineWidth=2;
+        ctx.shadowColor='#fd79a8'; ctx.shadowBlur=8; ctx.stroke(); ctx.restore();
+        // Dañar a los enemigos que el segmento atraviesa (solo los cercanos al punto medio)
+        const midX=(p1.x+p2.x)/2, midY=(p1.y+p2.y)/2;
+        const nearby=getNearbyEnemies(midX,midY,d/2+30);
+        for(let k=0;k<nearby.length;k++){
+          const e=nearby[k];
+          if(e.hp>0&&pointOnLine(e.x,e.y,p1.x,p1.y,p2.x,p2.y,e.radius+3)){
+            dealDamage(e,dps*dt,'');
+          }
+        }
+      }
     }
   }
 }
@@ -723,12 +888,14 @@ function tickAura(dt){
   ctx.restore();
   if(G.auraTimer>=freq){
     G.auraTimer=0;
-    enemies.forEach(e=>{
+    const nearby=getNearbyEnemies(cx,cy,U.auraRadius.v);
+    for(let i=0;i<nearby.length;i++){
+      const e=nearby[i];
       if(e.hp>0){
         const d=Math.sqrt((e.x-cx)**2+(e.y-cy)**2);
         if(d<=U.auraRadius.v) dealDamage(e,U.auraDmg.v*freq,'');
       }
-    });
+    }
   }
 }
 
@@ -748,7 +915,6 @@ function tickFireline(dt){
   G.firelineTimer+=dt;
   const freq=1/U.firelineFreq.v;
   const cx=canvas.width/2, cy=canvas.height/2;
-  // Dibujar línea activa si existe
   if(activeFireline&&activeFireline.alpha>0){
     activeFireline.alpha-=dt*3;
     const fl=activeFireline;
@@ -756,16 +922,27 @@ function tickFireline(dt){
     ctx.beginPath(); ctx.moveTo(fl.x1,fl.y1); ctx.lineTo(fl.x2,fl.y2);
     ctx.strokeStyle=`rgba(255,107,107,${fl.alpha})`; ctx.lineWidth=U.firelineWidth.v;
     ctx.shadowColor='#ff6b6b'; ctx.shadowBlur=12; ctx.stroke(); ctx.restore();
-    // Daño a enemigos en la línea
-    enemies.forEach(e=>{
-      if(e.hp>0&&pointOnLine(e.x,e.y,fl.x1,fl.y1,fl.x2,fl.y2,U.firelineWidth.v/2+e.radius)){
-        dealDamage(e,U.firelineDmg.v*dt,'🔥');
+    const lineLen=Math.sqrt((fl.x2-fl.x1)**2+(fl.y2-fl.y1)**2);
+    const steps=Math.max(1,Math.ceil(lineLen/150));
+    const tol=U.firelineWidth.v/2+20;
+    const seen=new Set();
+    for(let s=0;s<=steps;s++){
+      const t=s/steps;
+      const sx=fl.x1+(fl.x2-fl.x1)*t, sy=fl.y1+(fl.y2-fl.y1)*t;
+      const nearby=getNearbyEnemies(sx,sy,tol+80);
+      for(let i=0;i<nearby.length;i++){
+        const e=nearby[i];
+        if(seen.has(e)) continue;
+        seen.add(e);
+        if(e.hp>0&&pointOnLine(e.x,e.y,fl.x1,fl.y1,fl.x2,fl.y2,U.firelineWidth.v/2+e.radius)){
+          dealDamage(e,U.firelineDmg.v*dt,'🔥');
+          e.burnTimer=Math.max(e.burnTimer, U.firelineBurn.v); // aplicar quemadura
+        }
       }
-    });
+    }
   }
   if(G.firelineTimer>=freq){
     G.firelineTimer=0;
-    // Línea en dirección aleatoria desde la torre
     const angle=Math.random()*Math.PI*2;
     const len=Math.max(canvas.width,canvas.height);
     activeFireline={x1:cx,y1:cy,x2:cx+Math.cos(angle)*len,y2:cy+Math.sin(angle)*len,alpha:1};
@@ -788,6 +965,10 @@ function drawCritZone(){
   ctx.strokeStyle='rgba(253,203,110,.35)'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle='rgba(253,203,110,.04)'; ctx.fill();
+  // Label de ralentización
+  ctx.font='bold 10px Courier New'; ctx.fillStyle='rgba(253,203,110,0.5)';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(`ZONA CRIT -${Math.floor(U.critSlow.v*100)}%`, G.mouseX, G.mouseY-r-10);
   ctx.restore();
 }
 
@@ -875,7 +1056,8 @@ function tickLaser(dt){
   if(!U.unlockLaser.on) return;
   const cx=canvas.width/2, cy=canvas.height/2;
   const range=U.laserRange.v;
-  const sorted=enemies.filter(e=>e.hp>0)
+  const candidates=getNearbyEnemies(cx,cy,range);
+  const sorted=candidates.filter(e=>e.hp>0)
     .map(e=>({e,d:Math.sqrt((e.x-cx)**2+(e.y-cy)**2)}))
     .filter(o=>o.d<=range).sort((a,b)=>a.d-b.d).slice(0,U.laserChain.v);
   sorted.forEach((o,i)=>{
@@ -898,9 +1080,11 @@ function tickOrbit(dt){
   for(let i=0;i<count;i++){
     const a=orbitAngle+(Math.PI*2/count)*i;
     const ox=cx+Math.cos(a)*r, oy=cy+Math.sin(a)*r;
-    enemies.forEach(e=>{
+    const nearby=getNearbyEnemies(ox,oy,40);
+    for(let k=0;k<nearby.length;k++){
+      const e=nearby[k];
       if(e.hp>0){const d=Math.sqrt((e.x-ox)**2+(e.y-oy)**2);if(d<=e.radius+10) dealDamage(e,U.orbitDmg.v*dt*4,'');}
-    });
+    }
     ctx.beginPath(); ctx.arc(ox,oy,10,0,Math.PI*2);
     ctx.fillStyle='#5f27cd'; ctx.shadowColor='#a29bfe'; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ox,oy);
@@ -909,39 +1093,55 @@ function tickOrbit(dt){
 }
 
 // ── SOMBRAS ──────────────────────────────────────────────────────────────────
+const MAX_SHADOWS=180; // tope de sombras dibujadas por frame para sostener hordas masivas
 function drawShadowLayer(cx,cy){
-  shadowCtx.clearRect(0,0,shadowCanvas.width,shadowCanvas.height);
+  const W=shadowCanvas.width, H=shadowCanvas.height;
+  const scale=0.5; // shadowCanvas está a mitad de resolución del canvas principal
+  shadowCtx.clearRect(0,0,W,H);
   const op=Math.max(0.05,U.shadowOp.v);
-  const maxDim=Math.sqrt(canvas.width**2+canvas.height**2)*1.6;
+  // El maxDim en espacio de shadowCanvas (ya escalado a la mitad)
+  const maxDim=Math.sqrt(canvas.width**2+canvas.height**2)*1.6*scale;
   shadowCtx.save();
-  shadowCtx.translate(cx,cy); shadowCtx.scale(G.cameraZoom,G.cameraZoom); shadowCtx.translate(-cx,-cy);
+  // Replicar la transformación de cámara escalada a mitad
+  shadowCtx.translate(cx*scale,cy*scale); shadowCtx.scale(G.cameraZoom,G.cameraZoom); shadowCtx.translate(-cx*scale,-cy*scale);
   shadowCtx.globalCompositeOperation='source-over';
   shadowCtx.globalAlpha=op;
-  enemies.forEach(e=>{
-    const angle=Math.atan2(e.y-cy,e.x-cx);
-    const w=e.radius*1.2;
-    shadowCtx.fillStyle='rgba(5,7,12,1)';
-    shadowCtx.beginPath();
-    shadowCtx.moveTo(e.x+Math.cos(angle+Math.PI/2)*w,e.y+Math.sin(angle+Math.PI/2)*w);
-    shadowCtx.lineTo(e.x+Math.cos(angle-Math.PI/2)*w,e.y+Math.sin(angle-Math.PI/2)*w);
-    shadowCtx.lineTo(e.x+Math.cos(angle-Math.PI/2)*w+Math.cos(angle)*maxDim,e.y+Math.sin(angle-Math.PI/2)*w+Math.sin(angle)*maxDim);
-    shadowCtx.lineTo(e.x+Math.cos(angle+Math.PI/2)*w+Math.cos(angle)*maxDim,e.y+Math.sin(angle+Math.PI/2)*w+Math.sin(angle)*maxDim);
-    shadowCtx.closePath(); shadowCtx.fill();
-  });
+  const dynamicMax=enemies.length>800?60:enemies.length>300?100:MAX_SHADOWS;
+  const shadowSet=enemies; // sombra para todos los enemigos sin límite
+  shadowCtx.fillStyle='rgba(5,7,12,1)';
+  shadowCtx.beginPath();
+  for(let i=0;i<shadowSet.length;i++){
+    const e=shadowSet[i];
+    const ex=e.x*scale, ey=e.y*scale;
+    const angle=Math.atan2(ey-cy*scale, ex-cx*scale);
+    const w=e.radius*1.2*scale;
+    const cos=Math.cos(angle), sin=Math.sin(angle);
+    const cosP=Math.cos(angle+Math.PI/2), sinP=Math.sin(angle+Math.PI/2);
+    shadowCtx.moveTo(ex+cosP*w,ey+sinP*w);
+    shadowCtx.lineTo(ex-cosP*w,ey-sinP*w);
+    shadowCtx.lineTo(ex-cosP*w+cos*maxDim,ey-sinP*w+sin*maxDim);
+    shadowCtx.lineTo(ex+cosP*w+cos*maxDim,ey+sinP*w+sin*maxDim);
+    shadowCtx.closePath();
+  }
+  shadowCtx.fill();
   shadowCtx.globalCompositeOperation='destination-out';
   shadowCtx.globalAlpha=1;
   projectiles.forEach(p=>{
-    const g=shadowCtx.createRadialGradient(p.x,p.y,0,p.x,p.y,55);
+    const px=p.x*scale, py=p.y*scale, pr=55*scale;
+    const g=shadowCtx.createRadialGradient(px,py,0,px,py,pr);
     g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(.5,'rgba(0,0,0,.7)'); g.addColorStop(1,'rgba(0,0,0,0)');
-    shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(p.x,p.y,55,0,Math.PI*2); shadowCtx.fill();
+    shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(px,py,pr,0,Math.PI*2); shadowCtx.fill();
   });
   goldCoins.forEach(c=>{
-    const g=shadowCtx.createRadialGradient(c.x,c.y,0,c.x,c.y,40);
+    const cx2=c.x*scale, cy2=c.y*scale, cr=40*scale;
+    const g=shadowCtx.createRadialGradient(cx2,cy2,0,cx2,cy2,cr);
     g.addColorStop(0,'rgba(0,0,0,.9)'); g.addColorStop(1,'rgba(0,0,0,0)');
-    shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(c.x,c.y,40,0,Math.PI*2); shadowCtx.fill();
+    shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(cx2,cy2,cr,0,Math.PI*2); shadowCtx.fill();
   });
   shadowCtx.restore();
-  ctx.save(); ctx.globalCompositeOperation='multiply'; ctx.drawImage(shadowCanvas,0,0); ctx.restore();
+  // Escalar el shadowCanvas de vuelta al tamaño completo al componer sobre el ctx principal
+  ctx.save(); ctx.globalCompositeOperation='multiply';
+  ctx.drawImage(shadowCanvas,0,0,canvas.width,canvas.height); ctx.restore();
 }
 
 // ── HUD & SHOP ───────────────────────────────────────────────────────────────
@@ -963,6 +1163,14 @@ function getDiffLabel(){const labels=['Base','Dura','Brutal','Caótica','Apocal�
 function formatTime(s){const m=Math.floor(s/60);return`${m.toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`;}
 
 let currentTab='active';
+// Mapa de isWeapon -> clave real del upgrade que lo desbloquea (no todas siguen el patrón 'unlock'+Nombre)
+const WEAPON_UNLOCK_KEY={
+  Aura:'auraOn', Drone:'droneOn', Fireline:'firelineOn', Crit:'critOn', Tractor:'tractorOn',
+  Bomb:'unlockBomb', Bounce:'unlockBounce', Electric:'unlockElectric', Grenade:'unlockGrenade',
+  Laser:'unlockLaser', Missile:'unlockMissile', Orbit:'unlockOrbit', Shotgun:'unlockShotgun', Sniper:'unlockSniper',
+  VoltArc:'unlockVoltArc'
+};
+
 function renderShop(){
   const c=document.getElementById('upgrades-container');
   c.innerHTML='';
@@ -976,24 +1184,25 @@ function renderShop(){
     }
     // Ocultar sub-armas no desbloqueadas
     if(up.isWeapon){
-      const pk='unlock'+up.isWeapon;
+      const pk=WEAPON_UNLOCK_KEY[up.isWeapon];
       if(!U[pk]||!U[pk].on) return;
     }
     const isMaxUnlock=up.isUnlock&&up.on;
+    const isMaxUpgUnlock=up.isUpgUnlock&&up.lv>1&&up.v>=1; // purchased once is enough
     const isShadowMax=key==='shadowOp'&&up.v<=0.05;
     const btn=document.createElement('button');
     btn.className='upgrade-btn';
-    btn.disabled=G.gold<up.cost||isMaxUnlock||isShadowMax;
+    btn.disabled=G.gold<up.cost||isMaxUnlock||isMaxUpgUnlock||isShadowMax;
 
     let val='';
-    if(up.isUnlock) val=up.on?'ACTIVO':'🔒';
+    if(up.isUnlock||up.isUpgUnlock) val=up.on?'ACTIVO':'🔒';
     else if(key.includes('Rate')||key.includes('rate')||key.includes('Freq')||key.includes('freq')) val=up.v.toFixed(2)+'/s';
     else if(key==='shadowOp') val=Math.round(up.v*100)+'%';
     else if(key==='eliteVacuum') val=Math.round(up.v*100)+'%';
     else if(key==='critChance') val=Math.round(up.v*100)+'%';
     else val=typeof up.v==='number'&&up.v%1!==0?up.v.toFixed(1):up.v;
 
-    btn.innerHTML=`<div class="up-info"><span class="up-name">${up.name}${!up.isUnlock?` (${up.lv})`:''}  <span style="font-size:.6rem;color:#a29bfe">[${val}]</span></span><span class="up-desc">${up.desc}</span></div><span class="up-cost">${isMaxUnlock||isShadowMax?'MAX':`${Math.floor(up.cost)}🪙`}</span>`;
+    btn.innerHTML=`<div class="up-info"><span class="up-name">${up.name}${(!up.isUnlock&&!up.isUpgUnlock)?` (${up.lv})`:''}  <span style="font-size:.6rem;color:#a29bfe">[${val}]</span></span><span class="up-desc">${up.desc}</span></div><span class="up-cost">${isMaxUnlock||isMaxUpgUnlock||isShadowMax?'MAX':`${Math.floor(up.cost)}🪙`}</span>`;
     btn.onclick=()=>buyUpgrade(key);
     c.appendChild(btn);
   });
@@ -1005,9 +1214,12 @@ function buyUpgrade(key){
   G.gold-=up.cost; up.lv++;
   if(up.isUnlock){
     up.on=true;
-    // Habilitar sub-upgrades del mismo isWeapon prefix
-    const prefix=key.replace('unlock','').toLowerCase();
-    Object.keys(U).forEach(k=>{if(U[k].isWeapon&&U[k].isWeapon.toLowerCase()===prefix) U[k].on=true;});
+    // Activar todas las sub-mejoras cuyo unlock real (vía WEAPON_UNLOCK_KEY) sea esta clave
+    Object.keys(U).forEach(k=>{if(U[k].isWeapon&&WEAPON_UNLOCK_KEY[U[k].isWeapon]===key) U[k].on=true;});
+  }else if(up.isUpgUnlock){
+    // Upgrade que también funciona como unlock (ej: Explosión al morir)
+    up.v+=up.inc; up.on=true;
+    up.cost=Math.floor(up.bc*Math.pow(up.sc,up.lv-1));
   }else{
     up.v+=up.inc;
     up.cost=Math.floor(up.bc*Math.pow(up.sc,up.lv-1));
@@ -1074,14 +1286,23 @@ function finishRound(victory=false){
 let lastTime=0;
 function loop(ts){
   const dt=Math.min((ts-lastTime)/1000,.1)||.016; lastTime=ts;
+  const shopOpen=!document.getElementById('shop-overlay').classList.contains('hidden');
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const cx=canvas.width/2, cy=canvas.height/2, tr=35;
+
+  if(!shopOpen){
+
+  // Filtrar enemigos muertos al inicio del frame (antes del spawn) para que el guard
+  // MAX_ENEMIES_ALIVE sea preciso y no se acumulen zombies entre frames.
+  if(G.isRoundActive) enemies=enemies.filter(e=>e.hp>0);
+  buildEnemyGrid();
 
   if(G.isRoundActive){
     G.roundTimer+=dt; G.spawnTimer+=dt; G.difficultyTime+=dt;
     if(!bossSpawned&&G.roundTimer>=30) spawnBoss();
-    // Cooldown de spawn exponencialmente más corto con el tiempo
-    const sqCD=Math.max(0.4, 3.5*Math.pow(0.92, G.difficultyTime))/Math.max(1, gameLevel*.5);
+    // Cooldown de spawn exponencialmente más corto con el tiempo, con suelo más bajo
+    // para sostener oleadas casi continuas una vez la dificultad despega.
+    const sqCD=Math.max(0.15, 3.0*Math.pow(0.90, G.difficultyTime))/Math.max(1, gameLevel*.5);
     if(G.spawnTimer>=sqCD){G.spawnTimer=0;spawnSquad();}
     // Armas activas
     G.baseTimer+=dt;
@@ -1106,7 +1327,15 @@ function loop(ts){
   ctx.beginPath(); ctx.arc(cx,cy,tr,0,Math.PI*2);
   ctx.fillStyle='#2c3a50'; ctx.strokeStyle='#00d2d3'; ctx.lineWidth=4; ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.arc(cx,cy,tr*.6,0,Math.PI*2);
-  ctx.fillStyle=G.towerHealth<15?`rgba(255,71,87,${Math.abs(Math.sin(ts*.01))})` :'#10ac84'; ctx.fill();
+  const hpFrac=G.towerHealth/G.towerMaxHealth;
+  const hpColor=hpFrac>0.5?'#10ac84':hpFrac>0.25?'#f9ca24':'#ff4757';
+  ctx.fillStyle=G.towerHealth<15?`rgba(255,71,87,${Math.abs(Math.sin(ts*.01))})`:hpColor; ctx.fill();
+  // HP en número dentro de la torre
+  ctx.font=`bold ${Math.min(14,12+Math.floor(Math.log10(Math.max(1,G.towerMaxHealth))))}px Courier New`;
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=4;
+  ctx.fillText(Math.ceil(G.towerHealth),cx,cy);
+  ctx.shadowBlur=0;
 
   // Pasivas visuales
   tickAura(dt);
@@ -1138,12 +1367,15 @@ function loop(ts){
       if(G.isRoundActive){G.towerHealth-=e.dmgToTower;G.screenShake=8;for(let i=0;i<5;i++)particles.push(new Particle(e.x,e.y,'#ff4757',1.2));}
     }else e.draw();
   });
-  if(G.isRoundActive) enemies=enemies.filter(e=>e.hp>0);
+  // (enemies ya fue filtrado al inicio del frame, no necesitamos filtrarlo de nuevo aquí)
 
   // Proyectiles jugador
   projectiles.forEach(p=>{
     p.update(); p.draw();
-    enemies.forEach(e=>{
+    if(!p.alive) return;
+    const nearby=getNearbyEnemies(p.x,p.y,p.radius*1.8+24);
+    for(let i=0;i<nearby.length;i++){
+      const e=nearby[i];
       if(e.hp>0&&p.alive&&!p.hitEnemies.has(e)){
         const d=Math.sqrt((e.x-p.x)**2+(e.y-p.y)**2);
         if(d<=(e.radius+p.radius*1.8)){
@@ -1153,11 +1385,13 @@ function loop(ts){
           if(p.bouncesLeft>0){p.bouncesLeft--;p.bounce(e);}
           else if(p.pierceLeft>0) p.pierceLeft--;
           else p.alive=false;
+          if(!p.alive) break;
         }
       }
-    });
+    }
   });
   projectiles=projectiles.filter(p=>p.alive);
+  tickVoltArc(dt);
 
   // Proyectiles del jefe
   bossProjectiles.forEach(bp=>{
@@ -1180,12 +1414,23 @@ function loop(ts){
     if(G.towerHealth<=0){G.towerHealth=0;finishRound(false);}
   }
 
+  // Aplicar topes antes de actualizar para evitar crecimiento ilimitado con hordas masivas
+  if(particles.length>MAX_PARTICLES) particles=particles.slice(-MAX_PARTICLES);
+  if(goldCoins.length>MAX_GOLDCOINS){
+    // Auto-recoger las más antiguas (llevan más tiempo flotando) dando el oro al jugador
+    const excess=goldCoins.slice(0, goldCoins.length-MAX_GOLDCOINS);
+    excess.forEach(c=>collectCoin(c.value));
+    goldCoins=goldCoins.slice(goldCoins.length-MAX_GOLDCOINS);
+  }
+  if(damageTexts.length>MAX_DAMAGE_TEXTS) damageTexts=damageTexts.slice(-MAX_DAMAGE_TEXTS);
   particles.forEach(p=>{p.update();p.draw();}); particles=particles.filter(p=>p.alpha>0);
   goldCoins.forEach(c=>{c.update(dt);c.draw();}); goldCoins=goldCoins.filter(c=>c.alive);
   damageTexts.forEach(t=>{t.update();t.draw();}); damageTexts=damageTexts.filter(t=>t.alpha>0);
 
   ctx.restore();
   drawShadowLayer(cx,cy);
+  } // end !shopOpen
+
   requestAnimationFrame(loop);
 }
 
