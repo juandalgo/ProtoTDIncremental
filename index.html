@@ -2,60 +2,171 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Horde Cleaver v3</title>
+<title>Last Sanctuary — Judgment Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+:root{
+  --gold:#c9a84c;--gold-bright:#f0d080;--gold-dim:#7a6030;
+  --blood:#8b1a1a;--blood-bright:#cc2222;
+  --panel:#110d0a;
+  --border:#3d2e1a;
+  --text:#d4b896;--text-dim:#7a6040;--text-bright:#e8d4a8;
+  --soul:#e8d44a;
+}
 *{box-sizing:border-box;user-select:none;}
-body{margin:0;padding:0;background:#0b0e14;color:#e2e8f0;font-family:'Courier New',monospace;overflow:hidden;display:flex;height:100vh;cursor:none;}
-#game-container{position:relative;flex-grow:1;height:100vh;background:radial-gradient(circle,#1a1f2c 0%,#0b0e14 100%);cursor:none;}
-canvas{display:block;width:100%;height:100%;cursor:none;}
-.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(11,14,20,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:25;text-align:center;padding:20px;cursor:none;}
-.start-btn{cursor:none;}
-#hud{position:absolute;top:16px;left:16px;pointer-events:none;text-shadow:2px 2px 4px rgba(0,0,0,.8);z-index:20;}
+html{overflow:hidden;height:100%;}
+body{margin:0;padding:0;background:#0b0b0f;color:#b2bec3;font-family:'Cinzel','Courier New',serif;display:flex;height:100vh;cursor:none;}
+
+/* Fondo de combate: gris claro para contrastar los enemigos negros */
+#game-container{position:relative;flex-grow:1;height:100vh;background:#2a2a30;cursor:none;}
+canvas{display:block;width:100%;height:100%;cursor:none;pointer-events:none;}
+
+/* ── HUD ── */
+#hud{position:absolute;top:16px;left:16px;pointer-events:none;z-index:20;}
 .hud-row{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;}
-.stat{font-size:1.1rem;font-weight:bold;}
-#gold-hud{color:#ffd700;font-size:1.6rem;font-weight:bold;}
-#hp-hud{color:#ff4757;}
-#timer-hud{color:#535c68;font-size:2rem;font-family:monospace;}
-#level-hud{color:#a29bfe;font-size:1rem;font-weight:bold;}
-#boss-bar-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:340px;display:none;z-index:21;}
-#boss-bar-label{text-align:center;font-size:.85rem;color:#ff6b6b;font-weight:bold;margin-bottom:3px;letter-spacing:1px;}
-#boss-bar-bg{background:#1c202c;border-radius:5px;height:16px;border:1px solid #ff6b6b;}
-#boss-bar{height:100%;background:linear-gradient(90deg,#ff4757,#ff6b6b);border-radius:5px;transition:width .1s;}
-.timer-active{color:#2ed573!important;animation:pulse 1s infinite alternate;}
-@keyframes pulse{from{opacity:.6}to{opacity:1}}
-#shop-panel{width:370px;background:#151a26;border-left:3px solid #232b3e;display:flex;flex-direction:column;z-index:30;box-shadow:-5px 0 15px rgba(0,0,0,.5);}
-#shop-top{padding:12px 16px 0;border-bottom:2px solid #232b3e;}
-#shop-gold{color:#ffd700;font-size:1.3rem;font-weight:bold;text-align:center;padding:6px 0;}
-#shop-level-badge{background:#341f97;color:#a29bfe;font-size:.75rem;font-weight:bold;padding:3px 10px;border-radius:20px;text-align:center;margin-bottom:6px;letter-spacing:1px;}
+.stat{font-size:1rem;font-weight:600;}
+#gold-hud{color:var(--gold-bright);font-size:1.5rem;font-weight:700;text-shadow:0 0 12px rgba(201,168,76,.7),1px 1px 3px rgba(0,0,0,.9);}
+#hp-hud{color:#cc4444;font-size:1rem;font-weight:600;text-shadow:1px 1px 3px rgba(0,0,0,.9);}
+#timer-hud{color:#3a3a44;font-size:1.8rem;font-family:'Cinzel',serif;letter-spacing:3px;text-shadow:1px 1px 3px rgba(0,0,0,.9);}
+#level-hud{color:var(--gold);font-size:.9rem;font-weight:600;letter-spacing:2px;text-shadow:1px 1px 3px rgba(0,0,0,.9);}
+#enemies-hud{color:#4a4a54;font-size:.85rem;text-shadow:1px 1px 2px rgba(0,0,0,.9);}
+
+/* Boss bar */
+#boss-bar-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:360px;display:none;z-index:21;}
+#boss-bar-label{text-align:center;font-size:.75rem;color:var(--blood-bright);font-weight:700;margin-bottom:4px;letter-spacing:3px;font-family:'Cinzel',serif;text-transform:uppercase;}
+#boss-bar-bg{background:#0d0806;border-radius:2px;height:14px;border:1px solid var(--blood);box-shadow:0 0 8px rgba(139,26,26,.4);}
+#boss-bar{height:100%;background:linear-gradient(90deg,#6b0f0f,#cc2222,#ff4040);border-radius:2px;}
+.timer-active{color:var(--gold)!important;animation:pulse 1s infinite alternate;}
+@keyframes pulse{from{opacity:.5}to{opacity:1}}
+
+/* ── PANEL LATERAL (estilo Last Sanctuary) ── */
+#shop-panel{
+  width:380px;background:var(--panel);border-left:2px solid var(--border);
+  display:flex;flex-direction:column;z-index:30;
+  box-shadow:-8px 0 24px rgba(0,0,0,.9);position:relative;
+}
+#shop-panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),var(--gold),var(--gold-dim),transparent);
+}
+#shop-top{padding:14px 16px 0;border-bottom:1px solid var(--border);}
+#shop-logo{text-align:center;margin-bottom:8px;}
+#shop-logo-title{font-size:1rem;font-weight:700;color:var(--gold-bright);letter-spacing:4px;font-family:'Cinzel',serif;text-shadow:0 0 10px rgba(201,168,76,.5);}
+#shop-logo-sub{font-size:.55rem;color:var(--gold-dim);letter-spacing:6px;text-transform:uppercase;margin-top:1px;}
+#shop-gold{
+  color:var(--soul);font-size:1.2rem;font-weight:700;text-align:center;
+  padding:6px 0;letter-spacing:1px;text-shadow:0 0 10px rgba(232,212,74,.4);
+  border-bottom:1px solid var(--border);margin-bottom:6px;
+}
+#shop-gold::before{content:'✦ ';}
+#shop-gold::after{content:' ✦';}
+#shop-level-badge{
+  background:linear-gradient(135deg,#1a0f05,#2a1a08);
+  color:var(--gold);font-size:.65rem;font-weight:700;
+  padding:4px 12px;border:1px solid var(--gold-dim);
+  text-align:center;margin-bottom:6px;letter-spacing:2px;text-transform:uppercase;
+}
 .shop-tabs{display:flex;gap:0;margin-top:6px;}
-.tab-btn{flex:1;background:#1c202c;border:none;color:#718093;padding:7px 4px;font-size:.75rem;cursor:pointer;font-family:monospace;border-bottom:2px solid transparent;transition:all .1s;}
-.tab-btn.active{color:#00d2d3;border-bottom-color:#00d2d3;background:#232b3e;}
-.tab-btn:hover:not(.active){color:#a4b0be;background:#232b3e;}
-#upgrades-container{flex:1;overflow-y:auto;padding:10px 12px;}
-.section-label{font-size:.7rem;color:#535c68;border-top:1px solid #232b3e;margin:6px 0 4px;padding-top:4px;font-weight:bold;letter-spacing:1px;}
-.upgrade-btn{width:100%;background:#232b3e;border:1.5px solid #341f97;color:#fff;padding:8px 10px;margin-bottom:7px;border-radius:5px;cursor:pointer;text-align:left;transition:all .1s;display:flex;justify-content:space-between;align-items:center;}
-.upgrade-btn:hover:not(:disabled){background:#341f97;border-color:#5f27cd;}
-.upgrade-btn:disabled{background:#1c202c;border-color:#2c3243;color:#57606f;cursor:not-allowed;}
+.tab-btn{
+  flex:1;background:#0d0905;border:none;border-top:1px solid var(--border);
+  color:var(--text-dim);padding:8px 4px;font-size:.65rem;cursor:pointer;
+  font-family:'Cinzel',serif;border-bottom:2px solid transparent;
+  transition:all .15s;letter-spacing:1px;text-transform:uppercase;
+}
+.tab-btn.active{color:var(--gold-bright);border-bottom-color:var(--gold);background:#1a1005;}
+.tab-btn:hover:not(.active){color:var(--text);background:#150e06;}
+#upgrades-container{flex:1;overflow-y:auto;padding:10px 14px;}
+#upgrades-container::-webkit-scrollbar{width:4px;}
+#upgrades-container::-webkit-scrollbar-track{background:#0a0703;}
+#upgrades-container::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+.section-label{
+  font-size:.6rem;color:var(--gold-dim);border-top:1px solid var(--border);
+  margin:8px 0 5px;padding-top:6px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;text-align:center;font-family:'Cinzel',serif;
+}
+.upgrade-btn{
+  width:100%;background:linear-gradient(135deg,#120c06,#1c1208);
+  border:1px solid var(--border);color:var(--text);padding:9px 11px;margin-bottom:6px;
+  border-radius:2px;cursor:pointer;text-align:left;transition:all .12s;
+  display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;
+}
+.upgrade-btn::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--gold-dim),transparent);opacity:0;transition:opacity .15s;
+}
+.upgrade-btn:hover:not(:disabled){background:linear-gradient(135deg,#1e1408,#2a1c0c);border-color:var(--gold-dim);}
+.upgrade-btn:hover:not(:disabled)::before{opacity:1;}
+.upgrade-btn:disabled{background:#0d0905;border-color:#1a1208;color:#3a2e1a;cursor:not-allowed;}
 .up-info{display:flex;flex-direction:column;max-width:76%;}
-.up-name{font-weight:bold;font-size:.82rem;color:#ff9ff3;}
-.up-desc{font-size:.65rem;color:#a4b0be;margin-top:1px;}
-.up-cost{font-weight:bold;color:#ffd700;font-size:.9rem;white-space:nowrap;}
-.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(11,14,20,.93);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:25;text-align:center;padding:20px;cursor:none;}
-.overlay h1{font-size:2.2rem;margin-bottom:8px;}
-.overlay p{font-size:1rem;margin-bottom:8px;color:#a4b0be;}
-.start-btn{background:#10ac84;color:#fff;border:none;padding:11px 32px;font-size:1.2rem;font-weight:bold;border-radius:8px;cursor:none;margin-top:8px;}
-.start-btn:hover{background:#1dd1a1;}
+.up-name{font-weight:600;font-size:.78rem;color:var(--gold-bright);font-family:'Cinzel',serif;}
+.up-desc{font-size:.6rem;color:var(--text-dim);margin-top:2px;font-family:Georgia,serif;}
+.up-cost{font-weight:700;color:var(--soul);font-size:.85rem;white-space:nowrap;text-shadow:0 0 6px rgba(232,212,74,.3);}
+
+/* ── OVERLAYS ── */
+.overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(5,3,2,.96);display:flex;flex-direction:column;
+  justify-content:center;align-items:center;z-index:50;text-align:center;padding:20px;cursor:none;
+}
+.overlay h1{font-size:2rem;margin-bottom:8px;font-family:'Cinzel',serif;letter-spacing:4px;}
+.overlay p{font-size:.9rem;margin-bottom:8px;color:var(--text);font-family:Georgia,serif;max-width:480px;line-height:1.6;}
+.overlay-divider{width:240px;height:1px;margin:10px auto;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.start-btn{
+  background:linear-gradient(135deg,#1a0f05,#2e1c08);color:var(--gold-bright);
+  border:1px solid var(--gold);padding:12px 36px;font-size:1rem;font-weight:700;
+  border-radius:2px;cursor:none;margin-top:12px;font-family:'Cinzel',serif;
+  letter-spacing:3px;text-transform:uppercase;box-shadow:0 0 16px rgba(201,168,76,.2);transition:all .15s;
+  pointer-events:auto;
+}
+.start-btn:hover{background:linear-gradient(135deg,#2a1a08,#3e2810);box-shadow:0 0 24px rgba(201,168,76,.4);}
 .hidden{display:none!important;}
-#round-stats-box{display:flex;gap:14px;margin:8px 0 14px;flex-wrap:wrap;justify-content:center;}
-.stat-card{background:#1c202c;border:1px solid #2c3243;border-radius:7px;padding:8px 14px;min-width:120px;text-align:center;}
-.stat-card .sc-label{font-size:.65rem;color:#718093;text-transform:uppercase;letter-spacing:1px;}
-.stat-card .sc-value{font-size:1.3rem;font-weight:bold;margin-top:2px;}
-.stat-card .sc-record{font-size:.6rem;color:#535c68;margin-top:2px;}
-.stat-card.best .sc-value{color:#ffd700;}
-#diff-bar-wrap{position:absolute;bottom:14px;left:14px;width:calc(100% - 28px);height:8px;background:#1c202c;border-radius:4px;overflow:hidden;z-index:20;}
-#diff-bar{height:100%;width:0%;background:linear-gradient(90deg,#2ed573,#ff4757);}
-#crit-zone-indicator{position:absolute;pointer-events:none;border:2px dashed rgba(255,210,0,.4);border-radius:50%;display:none;z-index:15;}
-#custom-cursor{position:fixed;top:0;left:0;width:32px;height:32px;margin-left:-16px;margin-top:-16px;pointer-events:none;z-index:50;}
+#round-stats-box{display:flex;gap:12px;margin:10px 0 16px;flex-wrap:wrap;justify-content:center;}
+.stat-card{
+  background:linear-gradient(135deg,#120c06,#1c1208);border:1px solid var(--border);
+  border-radius:2px;padding:10px 16px;min-width:120px;text-align:center;
+}
+.stat-card .sc-label{font-size:.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;font-family:'Cinzel',serif;}
+.stat-card .sc-value{font-size:1.2rem;font-weight:700;margin-top:3px;color:var(--text-bright);font-family:'Cinzel',serif;}
+.stat-card .sc-record{font-size:.55rem;color:var(--text-dim);margin-top:3px;}
+.stat-card.best .sc-value{color:var(--soul);text-shadow:0 0 8px rgba(232,212,74,.4);}
+
+/* ── ÁRBOL DE MEJORAS OVERLAY ── */
+#tree-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#080608;z-index:100;
+  display:flex;flex-direction:column;
+}
+#tree-overlay.hidden{display:none!important;}
+#tree-overlay-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;border-bottom:1px solid #3d2e1a;flex-shrink:0;
+  background:#0a0608;
+}
+#tree-gold-display{color:#f0d080;font-size:1rem;font-weight:700;letter-spacing:3px;
+  text-shadow:0 0 12px rgba(201,168,76,.7);}
+#tree-hint{color:#3a2a1a;font-size:.6rem;letter-spacing:2px;}
+#tree-close-btn{background:transparent;border:1px solid #3d2e1a;
+  color:#7a6040;font-size:.75rem;padding:6px 14px;cursor:pointer;font-family:'Cinzel',serif;
+  letter-spacing:2px;transition:all .15s;}
+#tree-close-btn:hover{color:#f0d080;border-color:#c9a84c;}
+#tree-canvas-el{display:block;width:100%;flex:1;cursor:none;min-height:0;pointer-events:auto;}
+#tree-tooltip{position:fixed;pointer-events:none;z-index:110;
+  background:rgba(8,6,8,.97);border:1px solid #3d2e1a;padding:10px 14px;
+  max-width:220px;display:none;border-radius:2px;}
+#tree-tooltip .tt-name{color:#f0d080;font-size:.85rem;font-weight:700;margin-bottom:4px;font-family:'Cinzel',serif;}
+#tree-tooltip .tt-desc{color:#a08060;font-size:.72rem;margin-bottom:6px;font-family:Georgia,serif;line-height:1.5;}
+#tree-tooltip .tt-val{color:#c9a84c;font-size:.7rem;margin-bottom:3px;}
+#tree-tooltip .tt-cost{color:#e8d44a;font-size:.8rem;font-weight:700;}
+#tree-tooltip .tt-locked{color:#5a3a1a;font-size:.68rem;font-style:italic;margin-top:4px;}
+#diff-bar-wrap{position:absolute;bottom:14px;left:14px;width:calc(100% - 28px);height:4px;background:#111116;overflow:hidden;z-index:20;}
+#shop-panel{display:none!important;}
+#diff-bar{height:100%;width:0%;background:linear-gradient(90deg,#636e72,#ae2012);}
+
+/* Cursor dorado */
+#custom-cursor{position:fixed;top:0;left:0;width:32px;height:32px;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);will-change:transform;}
+#shop-footer{text-align:center;font-size:.55rem;color:var(--text-dim);border-top:1px solid var(--border);padding:8px;font-family:'Cinzel',serif;letter-spacing:2px;}
+.start-btn{cursor:none!important;pointer-events:auto;}
 </style>
 </head>
 <body>
@@ -64,65 +175,191 @@ canvas{display:block;width:100%;height:100%;cursor:none;}
   <div id="hud">
     <div id="timer-hud">00:00</div>
     <div class="hud-row">
-      <span id="gold-hud">🪙 0</span>
+      <span id="gold-hud">ORO: 0</span>
       <span id="level-hud" class="stat">Nivel 1</span>
     </div>
     <div class="hud-row" style="margin-top:4px;">
-      <span id="hp-hud" class="stat">❤ 50</span>
-      <span id="enemies-hud" class="stat" style="color:#a4b0be;font-size:.9rem;">👾 0</span>
+      <span id="hp-hud" class="stat">SANCTUM: 50</span>
+      <span id="enemies-hud" class="stat" style="color:#636e72;font-size:.9rem;">HORDA: 0</span>
     </div>
   </div>
   <div id="boss-bar-wrap">
-    <div id="boss-bar-label">⚠ JEFE DE NIVEL</div>
+    <div id="boss-bar-label">⚠ ENTIERRO CELESTIAL - JEFE</div>
     <div id="boss-bar-bg"><div id="boss-bar" style="width:100%"></div></div>
   </div>
   <div id="diff-bar-wrap"><div id="diff-bar"></div></div>
 
   <div id="shop-overlay" class="overlay hidden">
-    <h1 id="round-title" style="color:#ff4757">¡Torre Colapsada!</h1>
-    <p id="round-summary"></p>
+    <div style="color:#3d2e1a;font-size:2rem;margin-bottom:6px;">✝</div>
+    <h1 id="round-title" style="color:#cc2222;letter-spacing:4px;">¡Santuario Asolado!</h1>
+    <div class="overlay-divider"></div>
+    <p id="round-summary" style="color:#7a6040;font-style:italic;"></p>
     <div id="round-stats-box"></div>
-    <p style="color:#ffd700;font-weight:bold;margin-bottom:12px;">Refuerza tus defensas.</p>
-    <button class="start-btn" id="next-btn">Siguiente Ronda</button>
-  </div>
-  <div id="start-overlay" class="overlay">
-    <h1 style="color:#00d2d3">HORDE CLEAVER</h1>
-    <p>Protege la torre. Apunta con el cursor. Recoge monedas pasándoles encima.</p>
-    <p style="font-size:.85rem;color:#ff9f43;">Sobrevive 30s para enfrentarte al Jefe de Nivel.</p>
-    <button class="start-btn" id="start-btn">Iniciar</button>
-  </div>
-</div>
-
-<div id="shop-panel">
-  <div id="shop-top">
-    <div id="shop-gold">🪙 0</div>
-    <div id="shop-level-badge">NIVEL 1 — Dificultad Base</div>
-    <div class="shop-tabs">
-      <button class="tab-btn active" data-tab="active">⚔ Activas</button>
-      <button class="tab-btn" data-tab="passive">🔮 Pasivas</button>
-      <button class="tab-btn" data-tab="util">🛡 Torre/Monedas</button>
+    <p style="color:var(--gold);font-size:.8rem;letter-spacing:2px;margin-bottom:14px;">— Los arcángeles te conceden un nuevo intento —</p>
+    <p style="color:var(--text-dim);font-size:.65rem;letter-spacing:1px;margin-bottom:10px;">[ ESPACIO ] Nueva Ronda &nbsp;·&nbsp; [ SHIFT ] Tienda de Mejoras</p>
+    <div style="display:flex;gap:16px;justify-content:center;">
+      <button class="start-btn" id="retry-btn">☩ Nueva Ronda</button>
+      <button class="start-btn" id="shop-btn" style="background:linear-gradient(135deg,#0a1a0a,#142814);border-color:#4a7c4a;color:#90d490;box-shadow:0 0 16px rgba(74,124,74,.2);">✦ Tienda de Mejoras</button>
     </div>
   </div>
-  <div id="upgrades-container"></div>
-  <div style="text-align:center;font-size:.7rem;color:#57606f;border-top:1px solid #232b3e;padding:6px;">v3.0</div>
+  <div id="start-overlay" class="overlay">
+    <div style="color:var(--gold-dim);font-size:2.5rem;margin-bottom:4px;text-shadow:0 0 20px rgba(201,168,76,.4);">✝</div>
+    <h1 style="color:var(--gold-bright);letter-spacing:6px;text-shadow:0 0 20px rgba(201,168,76,.3);">LAST SANCTUARY</h1>
+    <div style="color:#cc2222;font-size:.7rem;letter-spacing:8px;margin-bottom:8px;font-family:'Cinzel',serif;">JUDGMENT DAY</div>
+    <div class="overlay-divider"></div>
+    <p>Protege la capilla central. Apunta con la luz.<br>Recoge almas flotantes pasándeles por encima.</p>
+    <p style="font-size:.75rem;color:#ae2012;">Sobrevive 30s hasta que despierte el Arcángel Caído.</p>
+    <div class="overlay-divider"></div>
+    <button class="start-btn" id="start-btn">☩ Comenzar la Vigilia</button>
+  </div>
+
 </div>
 
-<div id="custom-cursor">
+<!-- Cursor personalizado al nivel del body para que siempre esté por encima de todos los overlays -->
+<div id="custom-cursor" style="position:fixed;top:0;left:0;width:32px;height:32px;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);will-change:transform;">
   <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-    <line x1="2" y1="16" x2="30" y2="16" stroke="rgba(0,0,0,0.7)" stroke-width="3"/>
-    <line x1="16" y1="2" x2="16" y2="30" stroke="rgba(0,0,0,0.7)" stroke-width="3"/>
-    <line x1="3" y1="16" x2="29" y2="16" stroke="#00d2d3" stroke-width="2"/>
-    <line x1="16" y1="3" x2="16" y2="29" stroke="#00d2d3" stroke-width="2"/>
-    <circle id="cc-pulse" cx="16" cy="16" r="11" fill="none" stroke="rgba(0,210,211,0.5)" stroke-width="1.5"/>
-    <circle cx="16" cy="16" r="2.5" fill="#fff"/>
+    <line x1="2" y1="16" x2="30" y2="16" stroke="rgba(0,0,0,0.8)" stroke-width="3"/>
+    <line x1="16" y1="2" x2="16" y2="30" stroke="rgba(0,0,0,0.8)" stroke-width="3"/>
+    <line x1="3" y1="16" x2="29" y2="16" stroke="#d4af37" stroke-width="1.5"/>
+    <line x1="16" y1="3" x2="16" y2="29" stroke="#d4af37" stroke-width="1.5"/>
+    <circle id="cc-pulse" cx="16" cy="16" r="11" fill="none" stroke="rgba(212,175,55,0.4)" stroke-width="1"/>
+    <circle cx="16" cy="16" r="2" fill="#fff"/>
   </svg>
 </div>
+
+<!-- Árbol de mejoras inline -->
+<div id="tree-overlay" class="hidden">
+  <div id="tree-overlay-header">
+    <div id="tree-gold-display">✦ <span id="tree-gold-val">0</span> Almas</div>
+    <div id="tree-hint">Arrastra · Rueda para zoom · Click para comprar</div>
+    <button id="tree-close-btn">✕ Cerrar Árbol</button>
+  </div>
+  <canvas id="tree-canvas-el"></canvas>
+  <div id="tree-tooltip">
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-desc" id="tt-desc"></div>
+    <div class="tt-val" id="tt-val"></div>
+    <div class="tt-cost" id="tt-cost"></div>
+    <div class="tt-locked" id="tt-locked"></div>
+  </div>
+</div>
+
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let shadowCanvas = document.createElement('canvas');
 let shadowCtx = shadowCanvas.getContext('2d');
+
+// ── TEXTURA DE SUELO ─────────────────────────────────────────────────────────
+// Se genera una sola vez en un offscreen canvas y se reutiliza cada frame.
+let groundTexCanvas = document.createElement('canvas');
+let groundTexCtx = groundTexCanvas.getContext('2d');
+let groundTexReady = false;
+
+function buildGroundTexture(w, h) {
+  groundTexCanvas.width  = w;
+  groundTexCanvas.height = h;
+  const gtx = groundTexCtx;
+  gtx.clearRect(0, 0, w, h);
+
+  // 1. Base: color plano ligeramente más cálido en el centro
+  const baseGrad = gtx.createRadialGradient(w*.5, h*.5, 0, w*.5, h*.5, Math.max(w,h)*.7);
+  baseGrad.addColorStop(0,   '#31303a');
+  baseGrad.addColorStop(0.5, '#2a2932');
+  baseGrad.addColorStop(1,   '#1e1d25');
+  gtx.fillStyle = baseGrad;
+  gtx.fillRect(0, 0, w, h);
+
+  // Seeded pseudo-random para reproducibilidad
+  let seed = 42;
+  function rng() { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 4294967296; }
+
+  // 2. Manchas grandes de suciedad / humedad
+  for (let i = 0; i < 120; i++) {
+    const x = rng() * w, y = rng() * h;
+    const r = 18 + rng() * 80;
+    const alpha = 0.03 + rng() * 0.07;
+    const dark  = rng() > 0.5;
+    const g2 = gtx.createRadialGradient(x, y, 0, x, y, r);
+    const col = dark ? `rgba(10,10,14,${alpha})` : `rgba(55,52,60,${alpha * .6})`;
+    g2.addColorStop(0, col);
+    g2.addColorStop(1, 'rgba(0,0,0,0)');
+    gtx.fillStyle = g2;
+    gtx.beginPath(); gtx.arc(x, y, r, 0, Math.PI * 2); gtx.fill();
+  }
+
+  // 3. Grietas finas (líneas irregulares)
+  for (let i = 0; i < 55; i++) {
+    let x = rng() * w, y = rng() * h;
+    const len   = 20 + rng() * 90;
+    const steps = Math.floor(len / 6);
+    const alpha = 0.10 + rng() * 0.18;
+    gtx.save();
+    gtx.strokeStyle = `rgba(8,8,12,${alpha})`;
+    gtx.lineWidth = 0.5 + rng() * 1.2;
+    gtx.lineCap = 'round';
+    gtx.beginPath(); gtx.moveTo(x, y);
+    for (let s = 0; s < steps; s++) {
+      x += (rng() - 0.5) * 14;
+      y += (rng() - 0.5) * 14;
+      gtx.lineTo(x, y);
+    }
+    gtx.stroke(); gtx.restore();
+  }
+
+  // 4. Pigmentación: puntos de polvo/arena finos
+  for (let i = 0; i < 3200; i++) {
+    const x = rng() * w, y = rng() * h;
+    const r = 0.5 + rng() * 2;
+    const alpha = 0.04 + rng() * 0.10;
+    const light = rng() > 0.6;
+    gtx.fillStyle = light
+      ? `rgba(80,76,90,${alpha})`
+      : `rgba(8,8,12,${alpha})`;
+    gtx.beginPath(); gtx.arc(x, y, r, 0, Math.PI * 2); gtx.fill();
+  }
+
+  // 5. Vetas de piedra: trazos largos horizontales/diagonales tenues
+  for (let i = 0; i < 30; i++) {
+    const y0  = rng() * h;
+    const x0  = rng() * w;
+    const len  = 60 + rng() * 200;
+    const angle = (rng() - 0.5) * 0.4; // casi horizontal
+    const alpha = 0.04 + rng() * 0.07;
+    gtx.save();
+    gtx.strokeStyle = `rgba(255,255,255,${alpha})`;
+    gtx.lineWidth = 0.6 + rng() * 1.5;
+    gtx.lineCap = 'round';
+    gtx.beginPath();
+    gtx.moveTo(x0, y0);
+    // Trazar en pequeños segmentos con ligero wiggle
+    let cx2 = x0, cy2 = y0;
+    const segs = Math.floor(len / 10);
+    for (let s = 0; s < segs; s++) {
+      cx2 += Math.cos(angle) * 10 + (rng() - 0.5) * 4;
+      cy2 += Math.sin(angle) * 10 + (rng() - 0.5) * 4;
+      gtx.lineTo(cx2, cy2);
+    }
+    gtx.stroke(); gtx.restore();
+  }
+
+  // 6. Oscurecimiento radial desde la iglesia (centro) hacia los bordes
+  // Radio interior = zona iluminada alrededor de la capilla
+  // Radio exterior = más allá de la pantalla para que los bordes sean muy oscuros
+  const innerR = Math.min(w, h) * 0.10;  // zona clara alrededor de la iglesia
+  const outerR = Math.max(w, h) * 0.75;  // hasta las esquinas
+  const vignette = gtx.createRadialGradient(w * .5, h * .5, innerR, w * .5, h * .5, outerR);
+  vignette.addColorStop(0,    'rgba(0,0,0,0)');
+  vignette.addColorStop(0.25, 'rgba(0,0,0,0.40)');
+  vignette.addColorStop(0.55, 'rgba(0,0,0,0.75)');
+  vignette.addColorStop(0.80, 'rgba(0,0,0,0.95)');
+  vignette.addColorStop(1,    'rgba(0,0,0,1.0)');
+  gtx.fillStyle = vignette;
+  gtx.fillRect(0, 0, w, h);
+
+  groundTexReady = true;
+}
 
 // ── ESTADO ──────────────────────────────────────────────────────────────────
 let records = { bestTime:0, bestGold:0, bestDamage:0 };
@@ -146,101 +383,98 @@ let G = {
 // ── UPGRADES ────────────────────────────────────────────────────────────────
 const U = {
   // ── ACTIVAS ──
-  baseDmg:      {tab:'active',cat:'⚡ Arma Base',    name:'Daño Base',       cost:10,  bc:10,  lv:1,sc:1.4, v:12,  inc:8,    on:true,  desc:'Daño por bala'},
-  baseRate:     {tab:'active',cat:'⚡ Arma Base',    name:'Cadencia Base',   cost:15,  bc:15,  lv:1,sc:1.5, v:1.5, inc:0.4,  on:true,  desc:'Disparos/s'},
-  baseCount:    {tab:'active',cat:'⚡ Arma Base',    name:'Balas Paralelas', cost:50,  bc:50,  lv:1,sc:1.5, v:1,   inc:1,    on:true,  desc:'Proyectiles paralelos'},
-  baseSize:     {tab:'active',cat:'⚡ Arma Base',    name:'Calibre',         cost:20,  bc:20,  lv:1,sc:1.4, v:4,   inc:2,    on:true,  desc:'Radio del proyectil'},
-  unlockBounce: {tab:'active',cat:'⚡ Arma Base',    name:'Rebote',          cost:80,  bc:80,  lv:0,sc:1.6, v:0,   inc:1,    on:false, isUnlock:true, desc:'Rebotes del proyectil al impactar'},
-  baseBounce:   {tab:'active',cat:'⚡ Arma Base',    name:'Rebotes (+1)',    cost:100, bc:100, lv:1,sc:1.7, v:0,   inc:1,    on:false, isWeapon:'Bounce', desc:'Número de rebotes'},
+  baseDmg:      {tab:'active',cat:'⚡ Luz Sagrada',    name:'Daño Ferviente',  cost:10,  bc:10,  lv:1,sc:1.4, v:12,  inc:8,    on:true,  desc:'Daño por haz de luz'},
+  baseRate:     {tab:'active',cat:'⚡ Luz Sagrada',    name:'Frecuencia',      cost:15,  bc:15,  lv:1,sc:1.5, v:1.5, inc:0.4,  on:true,  desc:'Destellos luminosos/s'},
+  baseCount:    {tab:'active',cat:'⚡ Luz Sagrada',    name:'Haces Paralelos', cost:50,  bc:50,  lv:1,sc:1.5, v:1,   inc:1,    on:true,  desc:'Haces de proyección paralela'},
+  baseSize:     {tab:'active',cat:'⚡ Luz Sagrada',    name:'Enfoque de Luz',  cost:20,  bc:20,  lv:1,sc:1.4, v:4,   inc:2,    on:true,  desc:'Grosor del haz'},
+  unlockBounce: {tab:'active',cat:'⚡ Luz Sagrada',    name:'Refracción',      cost:80,  bc:80,  lv:0,sc:1.6, v:0,   inc:1,    on:false, isUnlock:true, desc:'Rebota entre aberraciones al impactar'},
+  baseBounce:   {tab:'active',cat:'⚡ Luz Sagrada',    name:'Refracciones (+1)',cost:100, bc:100, lv:1,sc:1.7, v:0,   inc:1,    on:false, isWeapon:'Bounce', desc:'Número de rebotes luminosos'},
 
-  unlockShotgun:{tab:'active',cat:'🔫 Escopeta',     name:'Desbloquear',     cost:120, bc:120, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Disparo en abanico'},
-  sgDmg:        {tab:'active',cat:'🔫 Escopeta',     name:'Daño',            cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Shotgun', desc:'Daño por perdigón'},
-  sgCount:      {tab:'active',cat:'🔫 Escopeta',     name:'Perdigones',      cost:50,  bc:50,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Shotgun', desc:'Perdigones por disparo'},
-  sgRate:       {tab:'active',cat:'🔫 Escopeta',     name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.7, inc:0.2,  on:false, isWeapon:'Shotgun', desc:'Disparos/s'},
-  unlockVoltArc:{tab:'active',cat:'🔫 Escopeta',     name:'Arco Voltaico',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Arco eléctrico continuo entre perdigones cercanos, daña a quien lo atraviesa'},
-  voltArcDmg:   {tab:'active',cat:'🔫 Escopeta',     name:'Daño Arco',       cost:55,  bc:55,  lv:1,sc:1.5, v:10,  inc:7,    on:false, isWeapon:'VoltArc', desc:'Daño/s del arco eléctrico'},
-  voltArcRange: {tab:'active',cat:'🔫 Escopeta',     name:'Alcance Arco',    cost:50,  bc:50,  lv:1,sc:1.4, v:110, inc:25,   on:false, isWeapon:'VoltArc', desc:'Distancia máx. entre perdigones para formar arco'},
+  unlockShotgun:{tab:'active',cat:'🔫 Destello Abanico',name:'Desbloquear',    cost:120, bc:120, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Estallido en cono amplio'},
+  sgDmg:        {tab:'active',cat:'🔫 Destello Abanico',name:'Poder Sacro',     cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Shotgun', desc:'Daño por destello singular'},
+  sgCount:      {tab:'active',cat:'🔫 Destello Abanico',name:'Chispas de Fe',   cost:50,  bc:50,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Shotgun', desc:'Destellos por ráfaga'},
+  sgRate:       {tab:'active',cat:'🔫 Destello Abanico',name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.7, inc:0.2,  on:false, isWeapon:'Shotgun', desc:'Ráfagas por segundo'},
+  unlockVoltArc:{tab:'active',cat:'🔫 Destello Abanico',name:'Vínculo Ígneo',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Líneas de fuego sagrado entre destellos que incineran hordas'},
+  voltArcDmg:   {tab:'active',cat:'🔫 Destello Abanico',name:'Daño Vínculo',    cost:55,  bc:55,  lv:1,sc:1.5, v:10,  inc:7,    on:false, isWeapon:'VoltArc', desc:'Daño/s del arco ardiente'},
+  voltArcRange: {tab:'active',cat:'🔫 Destello Abanico',name:'Alcance Vínculo', cost:50,  bc:50,  lv:1,sc:1.4, v:110, inc:25,   on:false, isWeapon:'VoltArc', desc:'Distancia máxima de enlace'},
 
-  unlockSniper: {tab:'active',cat:'🎯 Francotirador',name:'Desbloquear',     cost:150, bc:150, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Alto daño, gran penetración'},
-  snDmg:        {tab:'active',cat:'🎯 Francotirador',name:'Daño',            cost:70,  bc:70,  lv:1,sc:1.5, v:80,  inc:50,   on:false, isWeapon:'Sniper', desc:'Daño por disparo'},
-  snRate:       {tab:'active',cat:'🎯 Francotirador',name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.5, inc:0.25, on:false, isWeapon:'Sniper', desc:'Disparos/s'},
-  snPierce:     {tab:'active',cat:'🎯 Francotirador',name:'Perforación',     cost:55,  bc:55,  lv:1,sc:1.5, v:5,   inc:5,    on:false, isWeapon:'Sniper', desc:'Enemigos atravesados'},
+  unlockSniper: {tab:'active',cat:'🎯 Juicio Penetrante',name:'Desbloquear',    cost:150, bc:150, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo colosal de alta perforación'},
+  snDmg:        {tab:'active',cat:'🎯 Juicio Penetrante',name:'Devastación',    cost:70,  bc:70,  lv:1,sc:1.5, v:80,  inc:50,   on:false, isWeapon:'Sniper', desc:'Daño por descarga celestial'},
+  snRate:       {tab:'active',cat:'🎯 Juicio Penetrante',name:'Enfriamiento',    cost:60,  bc:60,  lv:1,sc:1.5, v:0.5, inc:0.25, on:false, isWeapon:'Sniper', desc:'Descargas por segundo'},
+  snPierce:     {tab:'active',cat:'🎯 Juicio Penetrante',name:'Traspasar',       cost:55,  bc:55,  lv:1,sc:1.5, v:5,   inc:5,    on:false, isWeapon:'Sniper', desc:'Aberraciones atravesadas en línea'},
 
-  unlockGrenade:{tab:'active',cat:'💣 Lanza Granadas',name:'Desbloquear',    cost:180, bc:180, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Granada con explosión retardada'},
-  grDmg:        {tab:'active',cat:'💣 Lanza Granadas',name:'Daño',           cost:65,  bc:65,  lv:1,sc:1.5, v:60,  inc:30,   on:false, isWeapon:'Grenade', desc:'Daño de explosión'},
-  grRadius:     {tab:'active',cat:'💣 Lanza Granadas',name:'Radio',          cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:25,   on:false, isWeapon:'Grenade', desc:'Radio explosión'},
-  grRate:       {tab:'active',cat:'💣 Lanza Granadas',name:'Cadencia',       cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Grenade', desc:'Granadas/s'},
-  grRange:      {tab:'active',cat:'💣 Lanza Granadas',name:'Alcance',        cost:50,  bc:50,  lv:1,sc:1.4, v:220, inc:50,   on:false, isWeapon:'Grenade', desc:'Distancia máx de lanzamiento'},
+  unlockGrenade:{tab:'active',cat:'💣 Humo Condenatorio',name:'Desbloquear',    cost:180, bc:180, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Cáliz arrojadizo que genera estallidos de fuego primordial'},
+  grDmg:        {tab:'active',cat:'💣 Humo Condenatorio',name:'Impacto Sagrado', cost:65,  bc:65,  lv:1,sc:1.5, v:60,  inc:30,   on:false, isWeapon:'Grenade', desc:'Daño en el centro de la purga'},
+  grRadius:     {tab:'active',cat:'💣 Humo Condenatorio',name:'Radio Purga',     cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:25,   on:false, isWeapon:'Grenade', desc:'Radio de la detonación divina'},
+  grRate:       {tab:'active',cat:'💣 Humo Condenatorio',name:'Frecuencia',      cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Grenade', desc:'Lanzamientos por segundo'},
+  grRange:      {tab:'active',cat:'💣 Humo Condenatorio',name:'Alcance Lanzamiento',cost:50, bc:50,  lv:1,sc:1.4, v:220, inc:50,   on:false, isWeapon:'Grenade', desc:'Distancia máxima de envío'},
 
   // ── PASIVAS ──
-  auraOn:       {tab:'passive',cat:'🌀 Aura de Daño', name:'Desbloquear',    cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Daño área alrededor de la torre'},
-  auraDmg:      {tab:'passive',cat:'🌀 Aura de Daño', name:'DPS Aura',       cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Aura', desc:'Daño/s del aura'},
-  auraRadius:   {tab:'passive',cat:'🌀 Aura de Daño', name:'Radio',          cost:50,  bc:50,  lv:1,sc:1.4, v:100, inc:30,   on:false, isWeapon:'Aura', desc:'Radio del aura'},
-  auraFreq:     {tab:'passive',cat:'🌀 Aura de Daño', name:'Frecuencia',     cost:45,  bc:45,  lv:1,sc:1.5, v:4,   inc:2,    on:false, isWeapon:'Aura', desc:'Pulsos/s'},
+  auraOn:       {tab:'passive',cat:'🌀 Aura Bendita',   name:'Desbloquear',    cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Círculo de consagración protector alrededor del Altar'},
+  auraDmg:      {tab:'passive',cat:'🌀 Aura Bendita',   name:'Castigo Continuo',cost:60,  bc:60,  lv:1,sc:1.5, v:8,   inc:6,    on:false, isWeapon:'Aura', desc:'Daño por segundo dentro del perímetro'},
+  auraRadius:   {tab:'passive',cat:'🌀 Aura Bendita',   name:'Alcance Aura',    cost:50,  bc:50,  lv:1,sc:1.4, v:100, inc:30,   on:false, isWeapon:'Aura', desc:'Radio de consagración'},
+  auraFreq:     {tab:'passive',cat:'🌀 Aura Bendita',   name:'Pulsaciones/s',   cost:45,  bc:45,  lv:1,sc:1.5, v:4,   inc:2,    on:false, isWeapon:'Aura', desc:'Pulsos de purga por segundo'},
 
-  droneOn:      {tab:'passive',cat:'🤖 Drones',        name:'Desbloquear',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Drones que patrullan y atacan enemigos'},
-  droneCount:   {tab:'passive',cat:'🤖 Drones',        name:'Número',        cost:90,  bc:90,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Drone', desc:'Drones activos'},
-  droneDmg:     {tab:'passive',cat:'🤖 Drones',        name:'Daño',          cost:70,  bc:70,  lv:1,sc:1.5, v:12,  inc:10,   on:false, isWeapon:'Drone', desc:'Daño por ataque de drone'},
-  droneRange:   {tab:'passive',cat:'🤖 Drones',        name:'Alcance ataque',cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Drone', desc:'Alcance de disparo del drone'},
-  droneRate:    {tab:'passive',cat:'🤖 Drones',        name:'Cadencia',      cost:60,  bc:60,  lv:1,sc:1.5, v:1.5, inc:0.5,  on:false, isWeapon:'Drone', desc:'Ataques/s por drone'},
-  droneSpeed:   {tab:'passive',cat:'🤖 Drones',        name:'Velocidad',     cost:40,  bc:40,  lv:1,sc:1.4, v:80,  inc:30,   on:false, isWeapon:'Drone', desc:'Velocidad de movimiento del drone'},
+  droneOn:      {tab:'passive',cat:'🤖 Querubines de Luz',name:'Desbloquear',   cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Espíritus guardianes que orbitan y asisten en combate'},
+  droneCount:   {tab:'passive',cat:'🤖 Querubines de Luz',name:'Población',     cost:90,  bc:90,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Drone', desc:'Querubines activos'},
+  droneDmg:     {tab:'passive',cat:'🤖 Querubines de Luz',name:'Furia Celeste',  cost:70,  bc:70,  lv:1,sc:1.5, v:12,  inc:10,   on:false, isWeapon:'Drone', desc:'Daño por centella'},
+  droneRange:   {tab:'passive',cat:'🤖 Querubines de Luz',name:'Rango Visión',   cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Drone', desc:'Alcance de agresión'},
+  droneRate:    {tab:'passive',cat:'🤖 Querubines de Luz',name:'Cadencia',      cost:60,  bc:60,  lv:1,sc:1.5, v:1.5, inc:0.5,  on:false, isWeapon:'Drone', desc:'Ataques por segundo'},
+  droneSpeed:   {tab:'passive',cat:'🤖 Querubines de Luz',name:'Vuelo',          cost:40,  bc:40,  lv:1,sc:1.4, v:80,  inc:30,   on:false, isWeapon:'Drone', desc:'Velocidad del guardián flotante'},
 
-  unlockOrbit:  {tab:'passive',cat:'🔵 Esferas Órbita',name:'Desbloquear',   cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Esferas que orbitan la torre destruyendo enemigos'},
-  orbitCount:   {tab:'passive',cat:'🔵 Esferas Órbita',name:'Nº Esferas',    cost:90,  bc:90,  lv:1,sc:1.5, v:3,   inc:1,    on:false, isWeapon:'Orbit', desc:'Esferas en órbita'},
-  orbitDmg:     {tab:'passive',cat:'🔵 Esferas Órbita',name:'Daño',          cost:70,  bc:70,  lv:1,sc:1.5, v:20,  inc:15,   on:false, isWeapon:'Orbit', desc:'Daño por impacto de esfera'},
-  orbitRadius:  {tab:'passive',cat:'🔵 Esferas Órbita',name:'Radio Órbita',  cost:60,  bc:60,  lv:1,sc:1.4, v:80,  inc:20,   on:false, isWeapon:'Orbit', desc:'Distancia de las esferas a la torre'},
-  orbitSpeed:   {tab:'passive',cat:'🔵 Esferas Órbita',name:'Velocidad',     cost:50,  bc:50,  lv:1,sc:1.4, v:1.8, inc:0.5,  on:false, isWeapon:'Orbit', desc:'Velocidad de rotación'},
+  unlockOrbit:  {tab:'passive',cat:'🔵 Reliquias Giratorias',name:'Desbloquear', cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Orbes de vitral bendecido que aplastan aberraciones cercanas'},
+  orbitCount:   {tab:'passive',cat:'🔵 Reliquias Giratorias',name:'Cantidad Orbes',cost:90,  bc:90,  lv:1,sc:1.5, v:3,   inc:1,    on:false, isWeapon:'Orbit', desc:'Esferas activas en órbita'},
+  orbitDmg:     {tab:'passive',cat:'🔵 Reliquias Giratorias',name:'Impacto Rúnico',  cost:70,  bc:70,  lv:1,sc:1.5, v:20,  inc:15,   on:false, isWeapon:'Orbit', desc:'Daño por golpe directo'},
+  orbitRadius:  {tab:'passive',cat:'🔵 Reliquias Giratorias',name:'Radio Órbita',  cost:60,  bc:60,  lv:1,sc:1.4, v:80,  inc:20,   on:false, isWeapon:'Orbit', desc:'Distancia física a la capilla'},
+  orbitSpeed:   {tab:'passive',cat:'🔵 Reliquias Giratorias',name:'Giro Celeste',   cost:50,  bc:50,  lv:1,sc:1.4, v:1.8, inc:0.5,  on:false, isWeapon:'Orbit', desc:'Velocidad de rotación'},
 
-  firelineOn:   {tab:'passive',cat:'🔥 Línea de Fuego',name:'Desbloquear',   cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo de fuego que quema y puede encadenar'},
-  firelineDmg:  {tab:'passive',cat:'🔥 Línea de Fuego',name:'Daño Fuego',    cost:65,  bc:65,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Fireline', desc:'Daño/s a enemigos en la línea'},
-  firelineBurn: {tab:'passive',cat:'🔥 Línea de Fuego',name:'Duración Quema',cost:50,  bc:50,  lv:1,sc:1.4, v:1.5, inc:0.5,  on:false, isWeapon:'Fireline', desc:'Segundos quemando tras salir de la línea'},
-  firelineChain:{tab:'passive',cat:'🔥 Línea de Fuego',name:'Explosión al morir',cost:90,bc:90,lv:0,sc:1.5, v:0,   inc:1,    on:false, isWeapon:'Fireline', isUpgUnlock:true, desc:'Enemigos quemados explotan en fuego al morir'},
-  firelineFreq: {tab:'passive',cat:'🔥 Línea de Fuego',name:'Frecuencia',    cost:55,  bc:55,  lv:1,sc:1.5, v:1.0, inc:0.3,  on:false, isWeapon:'Fireline', desc:'Líneas/s'},
-  firelineWidth:{tab:'passive',cat:'🔥 Línea de Fuego',name:'Grosor',        cost:45,  bc:45,  lv:1,sc:1.4, v:12,  inc:6,    on:false, isWeapon:'Fireline', desc:'Grosor de la línea (px)'},
+  firelineOn:   {tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Desbloquear',   cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Línea de fuego inquisitorial constante cortando el mapa'},
+  firelineDmg:  {tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Calcinación',    cost:65,  bc:65,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Fireline', desc:'Daño por segundo expuesto'},
+  firelineBurn: {tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Llama Viva',     cost:50,  bc:50,  lv:1,sc:1.4, v:1.5, inc:0.5,  on:false, isWeapon:'Fireline', desc:'Duración del fuego residual en enemigos'},
+  firelineChain:{tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Cremación Espiritual',cost:90,bc:90,lv:0,sc:1.5,v:0,  inc:1,    on:false, isWeapon:'Fireline', isUpgUnlock:true, desc:'Los infectados ardiendo explotan al disolverse'},
+  firelineFreq: {tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Invocación/s',   cost:55,  bc:55,  lv:1,sc:1.5, v:1.0, inc:0.3,  on:false, isWeapon:'Fireline', desc:'Frecuencia de nuevas directrices'},
+  firelineWidth:{tab:'passive',cat:'🔥 Rayo de Purgatorio',name:'Magnitud',       cost:45,  bc:45,  lv:1,sc:1.4, v:12,  inc:6,    on:false, isWeapon:'Fireline', desc:'Espesor de la línea infernal'},
 
-  critOn:       {tab:'passive',cat:'🎯 Zona Crítica',  name:'Desbloquear',   cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Área de crítico y ralentización alrededor del cursor'},
-  critRadius:   {tab:'passive',cat:'🎯 Zona Crítica',  name:'Radio',         cost:70,  bc:70,  lv:1,sc:1.5, v:70,  inc:25,   on:false, isWeapon:'Crit', desc:'Radio de la zona crítica'},
-  critChance:   {tab:'passive',cat:'🎯 Zona Crítica',  name:'% Crítico',     cost:80,  bc:80,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Crit', desc:'Prob. crítico aumentada en zona'},
-  critSlow:     {tab:'passive',cat:'🎯 Zona Crítica',  name:'Ralentización', cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.1,  on:false, isWeapon:'Crit', desc:'Factor de ralentización en zona (0=parado)'},
+  critOn:       {tab:'passive',cat:'🎯 Enfoque Sagrado',name:'Desbloquear',    cost:250, bc:250, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Zona de iluminación crítica y ralentización bajo tu puntero'},
+  critRadius:   {tab:'passive',cat:'🎯 Enfoque Sagrado',name:'Rango Faro',      cost:70,  bc:70,  lv:1,sc:1.5, v:70,  inc:25,   on:false, isWeapon:'Crit', desc:'Tamaño del círculo de enfoque'},
+  critChance:   {tab:'passive',cat:'🎯 Enfoque Sagrado',name:'% Letalidad Sacra',cost:80,  bc:80,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Crit', desc:'Probabilidad de daño crítico masivo'},
+  critSlow:     {tab:'passive',cat:'🎯 Enfoque Sagrado',name:'Pavor Absoluto',  cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.1,  on:false, isWeapon:'Crit', desc:'Ralentización impuesta por la iluminación'},
 
-  // Misil y Laser movidos a pasivas
-  unlockMissile:{tab:'passive',cat:'🚀 Misil',        name:'Desbloquear',     cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Misil homing que explota en área'},
-  missileDmg:   {tab:'passive',cat:'🚀 Misil',        name:'Daño Explosión',  cost:70,  bc:70,  lv:1,sc:1.5, v:60,  inc:35,   on:false, isWeapon:'Missile', desc:'Daño en el área de explosión'},
-  missileRadius:{tab:'passive',cat:'🚀 Misil',        name:'Radio Explosión', cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Missile', desc:'Radio del área de explosión'},
-  missileRate:  {tab:'passive',cat:'🚀 Misil',        name:'Cadencia',        cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Missile', desc:'Misiles/s'},
+  unlockMissile:{tab:'passive',cat:'🚀 Flecha Divina',   name:'Desbloquear',     cost:160, bc:160, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Virote autoguiado de alta potencia explosiva'},
+  missileDmg:   {tab:'passive',cat:'🚀 Flecha Divina',   name:'Detonación Alba', cost:70,  bc:70,  lv:1,sc:1.5, v:60,  inc:35,   on:false, isWeapon:'Missile', desc:'Daño del impacto rúnico'},
+  missileRadius:{tab:'passive',cat:'🚀 Flecha Divina',   name:'Radio Explosivo', cost:55,  bc:55,  lv:1,sc:1.4, v:90,  inc:30,   on:false, isWeapon:'Missile', desc:'Onda expansiva sagrada'},
+  missileRate:  {tab:'passive',cat:'🚀 Flecha Divina',   name:'Invocación/s',   cost:60,  bc:60,  lv:1,sc:1.5, v:0.4, inc:0.15, on:false, isWeapon:'Missile', desc:'Frecuencia de lanzamiento'},
 
-  unlockLaser:  {tab:'passive',cat:'🔴 Rayo Láser',   name:'Desbloquear',     cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo continuo al enemigo más cercano'},
-  laserDps:     {tab:'passive',cat:'🔴 Rayo Láser',   name:'DPS',             cost:75,  bc:75,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Laser', desc:'Daño/s del rayo'},
-  laserRange:   {tab:'passive',cat:'🔴 Rayo Láser',   name:'Alcance',         cost:55,  bc:55,  lv:1,sc:1.4, v:200, inc:60,   on:false, isWeapon:'Laser', desc:'Distancia máxima del rayo'},
-  laserChain:   {tab:'passive',cat:'🔴 Rayo Láser',   name:'Encadenado',      cost:100, bc:100, lv:1,sc:1.6, v:1,   inc:1,    on:false, isWeapon:'Laser', desc:'Enemigos encadenados a la vez'},
+  unlockLaser:  {tab:'passive',cat:'🔴 Filo del Destino',name:'Desbloquear',     cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Rayo continuo carmesí hacia la bestia más próxima'},
+  laserDps:     {tab:'passive',cat:'🔴 Filo del Destino',name:'Severidad DPS',   cost:75,  bc:75,  lv:1,sc:1.5, v:15,  inc:12,   on:false, isWeapon:'Laser', desc:'Daño continuo por segundo'},
+  laserRange:   {tab:'passive',cat:'🔴 Filo del Destino',name:'Rango Destino',   cost:55,  bc:55,  lv:1,sc:1.4, v:200, inc:60,   on:false, isWeapon:'Laser', desc:'Distancia operativa máxima'},
+  laserChain:   {tab:'passive',cat:'🔴 Filo del Destino',name:'Encadenamiento',  cost:100, bc:100, lv:1,sc:1.6, v:1,   inc:1,    on:false, isWeapon:'Laser', desc:'Objetivos enlazados en simultáneo'},
 
   // ── TORRE / MONEDAS / SOMBRAS ──
-  towerHp:      {tab:'util',cat:'🛡 Torre',            name:'Vida Torre',    cost:35,  bc:35,  lv:1,sc:1.45,v:50,  inc:15,   on:true,  desc:'Vida máxima de la torre'},
-  shadowOp:     {tab:'util',cat:'🌑 Sombras',          name:'Filtro Sombra', cost:60,  bc:60,  lv:1,sc:1.5, v:0.45,inc:-0.05,on:true,  desc:'Opacidad por sombra enemiga'},
-  coinRadius:   {tab:'util',cat:'🪙 Monedas',          name:'Radio Recogida',cost:45,  bc:45,  lv:1,sc:1.4, v:28,  inc:15,   on:true,  desc:'Radio de atracción con cursor'},
-  tractorOn:    {tab:'util',cat:'🪙 Monedas',          name:'Rayo Tractor',  cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Atrae 1 moneda automáticamente'},
-  tractorCount: {tab:'util',cat:'🪙 Monedas',          name:'Monedas/Rayo',  cost:80,  bc:80,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Tractor', desc:'Monedas atraídas por pulso'},
-  tractorFreq:  {tab:'util',cat:'🪙 Monedas',          name:'Frecuencia Tractor',cost:70,bc:70, lv:1,sc:1.5, v:0.3, inc:0.25, on:false, isWeapon:'Tractor', desc:'Pulsos de atracción/s'},
-  unlockBomb:   {tab:'util',cat:'☣ Enemigos Especiales',name:'Hormona Volátil',cost:150,bc:150,lv:0,sc:1,  v:0,   inc:1,    on:false, isUnlock:true, desc:'Activa enemigos Bomba (explotan al morir)'},
-  bombRate:     {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Tasa Aparición Bomba',cost:60,bc:60,lv:1,sc:1.5,v:0.15,inc:0.05,on:false,isWeapon:'Bomb',desc:'Probabilidad de spawn de bomba'},
-  bombDmg:      {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Daño Explosión',cost:65,bc:65, lv:1,sc:1.5, v:1.0, inc:0.5,  on:false, isWeapon:'Bomb', desc:'Multiplicador de daño al explotar'},
-  bombRadius:   {tab:'util',cat:'☣ Enemigos Especiales',name:'🧨 Radio Explosión',cost:55,bc:55,lv:1,sc:1.4, v:110, inc:30,   on:false, isWeapon:'Bomb', desc:'Radio de la explosión del bomba'},
-  unlockElectric:{tab:'util',cat:'☣ Enemigos Especiales',name:'Célula de Rayos',cost:200,bc:200,lv:0,sc:1, v:0,   inc:1,    on:false, isUnlock:true, desc:'Activa enemigos Eléctricos (encadenan rayos)'},
-  elecRate:     {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Tasa Aparición Elec.',cost:60,bc:60,lv:1,sc:1.5,v:0.12,inc:0.04,on:false,isWeapon:'Electric',desc:'Probabilidad de spawn eléctrico'},
-  elecDmg:      {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Daño Rayo',    cost:65,  bc:65,  lv:1,sc:1.5, v:1.2, inc:0.4,  on:false, isWeapon:'Electric', desc:'Multiplicador de daño del rayo'},
-  elecRange:    {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Alcance Rayo', cost:55,  bc:55,  lv:1,sc:1.4, v:130, inc:30,   on:false, isWeapon:'Electric', desc:'Alcance del rayo al siguiente enemigo'},
-  elecChain:    {tab:'util',cat:'☣ Enemigos Especiales',name:'⚡ Saltos Rayo',  cost:70,  bc:70,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Electric', desc:'Número de saltos entre enemigos'},
-  eliteVacuum:  {tab:'util',cat:'🪙 Monedas',          name:'Vacío de Elite',cost:120, bc:120, lv:1,sc:1.6, v:0.20,inc:0.15, on:true,  desc:'% de atraer todas las monedas al matar un Elite'},
+  towerHp:      {tab:'util',cat:'🛡 Capilla',          name:'Integridad Altar', cost:35,  bc:35,  lv:1,sc:1.45,v:50,  inc:15,   on:true,  desc:'Poder de resistencia estructural de la capilla'},
+  shadowOp:     {tab:'util',cat:'🌑 Oscuridad',        name:'Bruma de Sombras', cost:60,  bc:60,  lv:1,sc:1.5, v:0.45,inc:-0.05,on:true,  desc:'Opacidad del velo de sombra enemigo'},
+  coinRadius:   {tab:'util',cat:'🪙 Almas',            name:'Imán Espiritual', cost:45,  bc:45,  lv:1,sc:1.4, v:28,  inc:15,   on:true,  desc:'Rango de atracción de almas caídas'},
+  tractorOn:    {tab:'util',cat:'🪙 Almas',            name:'Efluvio Atractor', cost:100, bc:100, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Recolecta almas lejanas automáticamente de forma constante'},
+  tractorCount: {tab:'util',cat:'🪙 Almas',            name:'Almas por pulso',  cost:80,  bc:80,  lv:1,sc:1.5, v:1,   inc:1,    on:false, isWeapon:'Tractor', desc:'Unidades absorbidas por ciclo'},
+  tractorFreq:  {tab:'util',cat:'🪙 Almas',            name:'Frecuencia Ciclo', cost:70,  bc:70,  lv:1,sc:1.5, v:0.3, inc:0.25, on:false, isWeapon:'Tractor', desc:'Pulsos de absorción/s'},
+  unlockBomb:   {tab:'util',cat:'☣ Entidades Inestables',name:'Mutación Volátil',cost:150, bc:150, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Despierta aberraciones Bomba (explotan al caer)'},
+  bombRate:     {tab:'util',cat:'☣ Entidades Inestables',name:'Tasa Aparición',   cost:60,  bc:60,  lv:1,sc:1.5, v:0.15,inc:0.05, on:false, isWeapon:'Bomb', desc:'Probabilidad de avistamiento'},
+  bombDmg:      {tab:'util',cat:'☣ Entidades Inestables',name:'Poder Corrupto',   cost:65,  bc:65,  lv:1,sc:1.5, v:1.0, inc:0.5,  on:false, isWeapon:'Bomb', desc:'Multiplicador de daño por onda inestable'},
+  bombRadius:   {tab:'util',cat:'☣ Entidades Inestables',name:'Radio Ruptura',   cost:55,  bc:55,  lv:1,sc:1.4, v:110, inc:30,   on:false, isWeapon:'Bomb', desc:'Magnitud física de su explosión'},
+  unlockElectric:{tab:'util',cat:'☣ Entidades Inestables',name:'Nexo Relámpago',  cost:200, bc:200, lv:0,sc:1,   v:0,   inc:1,    on:false, isUnlock:true, desc:'Despierta entes de Rayo Tormentoso'},
+  elecRate:     {tab:'util',cat:'☣ Entidades Inestables',name:'Aparición Rayo',   cost:60,  bc:60,  lv:1,sc:1.5, v:0.12,inc:0.04, on:false, isWeapon:'Electric', desc:'Frecuencia en la horda'},
+  elecDmg:      {tab:'util',cat:'☣ Entidades Inestables',name:'Letalidad Rayo',   cost:65,  bc:65,  lv:1,sc:1.5, v:1.2, inc:0.4,  on:false, isWeapon:'Electric', desc:'Multiplicador del arco voltaico descontrolado'},
+  elecRange:    {tab:'util',cat:'☣ Entidades Inestables',name:'Distancia Salto',  cost:55,  bc:55,  lv:1,sc:1.4, v:130, inc:30,   on:false, isWeapon:'Electric', desc:'Rango máximo entre objetivos de salto'},
+  elecChain:    {tab:'util',cat:'☣ Entidades Inestables',name:'Límite Saltos',    cost:70,  bc:70,  lv:1,sc:1.5, v:5,   inc:2,    on:false, isWeapon:'Electric', desc:'Número máximo de encadenamientos'},
+  eliteVacuum:  {tab:'util',cat:'🪙 Almas',            name:'Cosecha Primordial',cost:120,bc:120, lv:1,sc:1.6, v:0.20,inc:0.15, on:true,  desc:'% de absorber instantáneamente todas las almas vivas al abatir un Élite'},
 };
 
 // ── ENTIDADES ────────────────────────────────────────────────────────────────
 let enemies=[], particles=[], damageTexts=[], goldCoins=[], lightningChains=[], projectiles=[], grenades=[], drones=[];
 let firelines=[], critZoneRadius=0;
+let bloodSplatters=[];
 
 // ── GRID ESPACIAL ────────────────────────────────────────────────────────────
-// Con hordas de cientos/miles de enemigos, las búsquedas "enemigos cerca de X" dejan de ser
-// viables en O(n) repetido muchas veces por frame. Esta cuadrícula divide el mapa en celdas
-// y se reconstruye una vez por frame; las consultas solo recorren las celdas relevantes.
 const GRID_CELL=70;
 let enemyGrid=new Map();
 function gridKey(cx,cy){return cx+','+cy;}
@@ -256,8 +490,6 @@ function buildEnemyGrid(){
     bucket.push(e);
   }
 }
-// Devuelve enemigos vivos cuyo centro está dentro de `radius` de (x,y), consultando solo
-// las celdas que intersectan ese círculo en vez de recorrer el array completo.
 function getNearbyEnemies(x,y,radius){
   const result=[];
   const minGx=Math.floor((x-radius)/GRID_CELL), maxGx=Math.floor((x+radius)/GRID_CELL);
@@ -274,16 +506,14 @@ function getNearbyEnemies(x,y,radius){
 function resizeCanvas(){
   canvas.width=canvas.parentElement.clientWidth;
   canvas.height=canvas.parentElement.clientHeight;
-  // shadowCanvas a mitad de resolución: reduce el coste de GPU de compositing de sombras a 1/4
-  // sin pérdida visual perceptible (las sombras son formas borrosas sin detalle fino).
   shadowCanvas.width=Math.ceil(canvas.width/2); shadowCanvas.height=Math.ceil(canvas.height/2);
+  buildGroundTexture(canvas.width, canvas.height);
 }
 window.addEventListener('resize',resizeCanvas); resizeCanvas();
 
 const customCursor=document.getElementById('custom-cursor');
 document.addEventListener('mousemove',(e)=>{
-  customCursor.style.left=e.clientX+'px';
-  customCursor.style.top=e.clientY+'px';
+  customCursor.style.transform=`translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
   const r=canvas.getBoundingClientRect();
   G.cursorX=e.clientX-r.left;
   G.cursorY=e.clientY-r.top;
@@ -298,7 +528,6 @@ document.addEventListener('mousemove',(e)=>{
     }
   });
 });
-// Pulso del cursor independiente del estado del juego (menú, tienda, ronda activa)
 (function cursorPulseLoop(ts){
   const pulse=0.5+0.5*Math.sin(ts*0.005);
   const ring=document.getElementById('cc-pulse');
@@ -312,63 +541,65 @@ class Enemy{
     if(fx!=null&&fy!=null){
       this.x=fx+(Math.random()*40-20); this.y=fy+(Math.random()*40-20);
     }else{
-      // Spawn desde todas direcciones para dar sensación de estar rodeado
       const angle=Math.random()*Math.PI*2;
       const cx=canvas.width/2, cy=canvas.height/2;
       const maxR=Math.max(canvas.width,canvas.height)*0.7;
       this.x=cx+Math.cos(angle)*maxR; this.y=cy+Math.sin(angle)*maxR;
     }
     this.type=type; this.isBoss=isBoss; this.isElite=isElite;
-    this.burnTimer=0; // tiempo restante quemando
-    this.slowTimer=0; // tiempo restante ralentizado por zona crítica
+    this.burnTimer=0; 
+    this.slowTimer=0; 
     const lvScale=Math.pow(3.0,gameLevel-1);
-    // Variación de tamaño y color por unidad
-    const sv=0.75+Math.random()*0.5;  // 0.75x a 1.25x de radio
-    const cv=Math.floor(Math.random()*50)-25; // variación de color ±25
+    const sv=0.75+Math.random()*0.5;  
+    const cv=Math.floor(Math.random()*20); // Sombras oscuras variadas
+    
+    // Configuración estética basada en la imagen (Sombras negras/oscuras con ojos rojos)
+    this.baseColor=`rgb(${10+cv},${10+cv},${14+cv})`; 
+    this.eyeColor='#ff0022';
+    this.lookAngle=0;
+
     if(isBoss){
-      this.radius=62+Math.floor(Math.random()*10); this.speed=0.85; this.color='#c44569';
+      this.radius=62+Math.floor(Math.random()*10); this.speed=0.85; this.color='#3a0c11';
       this.maxHp=1800*lvScale; this.goldReward=Math.ceil(150*lvScale);
       this.dmgToTower=60; this.attackTimer=0; this.attackRate=1.2;
       this.orbitR=160+Math.random()*40; this.orbitA=Math.random()*Math.PI*2; this.orbitDir=Math.random()<.5?1:-1;
-      this.reaching=true; // primero llega a la órbita, luego orbita
+      this.reaching=true; 
     }else if(isElite){
-      this.radius=Math.floor(18*sv+4); this.speed=1.0+Math.random()*0.4; this.color=`rgb(${180+cv},${50+cv},${220+cv})`;
+      this.radius=Math.floor(18*sv+4); this.speed=1.0+Math.random()*0.4; this.color='#1c0a21';
       this.maxHp=150*lvScale; this.goldReward=Math.ceil(25*lvScale);
       this.dmgToTower=15;
     }else{
       switch(type){
-        case'base':    this.radius=Math.floor(5*sv+2);  this.speed=2.2+Math.random()*.5; this.color=`rgb(${220+cv},${35+cv},35)`;   this.maxHp=8*lvScale;   this.goldReward=Math.ceil(2*Math.pow(1.1,gameLevel-1));  this.dmgToTower=5;  break;
-        case'armored': this.radius=Math.floor(10*sv+4); this.speed=0.6+Math.random()*.2; this.color=`rgb(${220+cv},${110+cv},25)`;  this.maxHp=55*lvScale;  this.goldReward=Math.ceil(8*Math.pow(1.1,gameLevel-1));  this.dmgToTower=20; break;
-        case'nest':    this.radius=Math.floor(16*sv+4); this.speed=1.2;                   this.color=`rgb(${120+cv},35,${180+cv})`; this.maxHp=100*lvScale; this.goldReward=Math.ceil(20*Math.pow(1.1,gameLevel-1)); this.dmgToTower=30;
+        case'base':    this.radius=Math.floor(6*sv+2);  this.speed=2.2+Math.random()*.5;  this.maxHp=8*lvScale;   this.goldReward=Math.ceil(2*Math.pow(1.1,gameLevel-1));  this.dmgToTower=5;  break;
+        case'armored': this.radius=Math.floor(11*sv+4); this.speed=0.6+Math.random()*.2;  this.maxHp=55*lvScale;  this.goldReward=Math.ceil(8*Math.pow(1.1,gameLevel-1));  this.dmgToTower=20; break;
+        case'nest':    this.radius=Math.floor(16*sv+4); this.speed=1.2;                    this.maxHp=100*lvScale; this.goldReward=Math.ceil(20*Math.pow(1.1,gameLevel-1)); this.dmgToTower=30;
           this.orR=Math.min(canvas.width,canvas.height)*.25; this.orA=0; this.orDir=Math.random()<.5?1:-1; this.spawnT=0; this.spawnCD=2.5; break;
-        case'bomb':    this.radius=Math.floor(8*sv+3);  this.speed=1.4;                   this.color=`rgb(${200+cv},${180+cv},15)`;  this.maxHp=20*lvScale;  this.goldReward=Math.ceil(5*Math.pow(1.1,gameLevel-1));  this.dmgToTower=8;
+        case'bomb':    this.radius=Math.floor(8*sv+3);  this.speed=1.4;                    this.maxHp=20*lvScale;  this.goldReward=Math.ceil(5*Math.pow(1.1,gameLevel-1));  this.dmgToTower=8;
           this.srR=Math.sqrt((this.x-canvas.width/2)**2+(this.y-canvas.height/2)**2); this.srA=Math.atan2(this.y-canvas.height/2,this.x-canvas.width/2); break;
-        case'electric':this.radius=Math.floor(7*sv+3);  this.speed=1.6;                   this.color=`rgb(0,${180+cv},${210+cv})`;  this.maxHp=16*lvScale;  this.goldReward=Math.ceil(6*Math.pow(1.1,gameLevel-1));  this.dmgToTower=7;  break;
-        default:       this.radius=6; this.speed=2; this.color='#ff4757'; this.maxHp=8*lvScale; this.goldReward=2; this.dmgToTower=5;
+        case'electric':this.radius=Math.floor(7*sv+3);  this.speed=1.6;                    this.maxHp=16*lvScale;  this.goldReward=Math.ceil(6*Math.pow(1.1,gameLevel-1));  this.dmgToTower=7;  break;
+        default:       this.radius=6; this.speed=2; this.maxHp=8*lvScale; this.goldReward=2; this.dmgToTower=5;
       }
     }
     this.hp=this.maxHp; this.critMult=1; this.baseSpeed=this.speed;
   }
   update(tx,ty,dt){
-    // Slow de zona crítica
     const inCrit=U.critOn.on&&Math.sqrt((this.x-G.mouseX)**2+(this.y-G.mouseY)**2)<U.critRadius.v;
     const slowFactor=inCrit?(1-U.critSlow.v):1;
     this.speed=this.baseSpeed*slowFactor;
 
-    // Quemadura
     if(this.burnTimer>0){
       this.burnTimer-=dt;
-      this.hp-=U.firelineDmg.v*dt*0.5; // daño adicional mientras quema
+      this.hp-=U.firelineDmg.v*dt*0.5; 
     }
 
     const dx=tx-this.x, dy=ty-this.y, dist=Math.sqrt(dx*dx+dy*dy);
+    this.lookAngle = Math.atan2(dy, dx); // Guardar ángulo hacia donde se mueve (la iglesia)
+
     if(this.isBoss){
       if(this.reaching){
-        // Avanzar hasta alcanzar la distancia de órbita
         if(dist>this.orbitR+5){this.x+=(dx/dist)*this.speed;this.y+=(dy/dist)*this.speed;}
         else{this.reaching=false; this.orbitA=Math.atan2(this.y-ty,this.x-tx);}
       }else{
-        // Orbitar permanentemente
         this.orbitA+=dt*(this.speed/this.orbitR)*this.orbitDir;
         this.x=tx+Math.cos(this.orbitA)*this.orbitR;
         this.y=ty+Math.sin(this.orbitA)*this.orbitR;
@@ -402,44 +633,70 @@ class Enemy{
     return dist;
   }
   draw(){
-    // Flash de quemadura
     const burnFlash=this.burnTimer>0&&Math.sin(Date.now()*0.02)>0;
-    ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    
+    // Dibujo del cuerpo amorfo/silueta oscura (estilo imagen adjunta)
+    ctx.save();
+    ctx.beginPath(); 
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    
     if(this.isBoss){
-      ctx.fillStyle=burnFlash?'#ff9f43':'#c44569'; ctx.shadowColor='#ff6b81'; ctx.shadowBlur=25; ctx.fill(); ctx.shadowBlur=0;
-      ctx.strokeStyle='#ff6b81'; ctx.lineWidth=4; ctx.stroke();
-      // Anillo exterior del jefe
+      ctx.fillStyle=burnFlash?'#d4af37':'#200407'; ctx.shadowColor='#ae2012'; ctx.shadowBlur=25; ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle='#ae2012'; ctx.lineWidth=3; ctx.stroke();
+      
       ctx.beginPath(); ctx.arc(this.x,this.y,this.radius+8,0,Math.PI*2);
-      ctx.strokeStyle='rgba(255,107,129,0.3)'; ctx.lineWidth=3; ctx.stroke();
+      ctx.strokeStyle='rgba(174,32,18,0.2)'; ctx.lineWidth=2; ctx.stroke();
+      
       const bw=this.radius*3;
-      ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw,8);
-      ctx.fillStyle='#ff4757'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw*(this.hp/this.maxHp),8);
+      ctx.fillStyle='rgba(0,0,0,.8)'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw,6);
+      ctx.fillStyle='#ae2012'; ctx.fillRect(this.x-bw/2,this.y-this.radius-16,bw*(this.hp/this.maxHp),6);
     }else if(this.isElite){
-      ctx.fillStyle=burnFlash?'#ff9f43':this.color; ctx.shadowColor='#e056fd'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
-      ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle=burnFlash?'#d4af37':'#0e0514'; ctx.shadowColor='#4a0e4e'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle='#6f1d7a'; ctx.lineWidth=1.5; ctx.stroke();
     }else{
-      ctx.fillStyle=burnFlash?'#ff7f50':this.color; ctx.fill();
-      if(this.type==='nest'){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
-      else if(this.type==='bomb'){ctx.beginPath();ctx.arc(this.x,this.y,this.radius*.4,0,Math.PI*2);ctx.fillStyle='#1e272e';ctx.fill();}
-      else if(this.type==='electric'){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();}
+      ctx.fillStyle=burnFlash?'#e65100':this.baseColor; 
+      ctx.fill();
+      if(this.type==='nest'){ctx.strokeStyle='#3a1f5d';ctx.lineWidth=1.5;ctx.stroke();}
+      else if(this.type==='bomb'){ctx.beginPath();ctx.arc(this.x,this.y,this.radius*.4,0,Math.PI*2);ctx.fillStyle='#3a0c11';ctx.fill();}
+      else if(this.type==='electric'){ctx.strokeStyle='#0f4c5c';ctx.lineWidth=1;ctx.stroke();}
     }
+
+    // OJOS ROJOS BRILLANTES (Mirando fíjamente al centro, rasgo clave de la imagen)
+    if(!burnFlash){
+      const eyeDist=this.radius*0.4;
+      const eyeSize=this.isBoss?3:1.5;
+      ctx.fillStyle=this.eyeColor;
+      ctx.shadowColor=this.eyeColor;
+      ctx.shadowBlur=5;
+      
+      // Ojo izquierdo
+      const ox1=this.x+Math.cos(this.lookAngle-0.4)*eyeDist;
+      const oy1=this.y+Math.sin(this.lookAngle-0.4)*eyeDist;
+      ctx.beginPath(); ctx.arc(ox1,oy1,eyeSize,0,Math.PI*2); ctx.fill();
+      
+      // Ojo derecho
+      const ox2=this.x+Math.cos(this.lookAngle+0.4)*eyeDist;
+      const oy2=this.y+Math.sin(this.lookAngle+0.4)*eyeDist;
+      ctx.beginPath(); ctx.arc(ox2,oy2,eyeSize,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+
     if(this.hp<this.maxHp&&!this.isBoss){
-      const bw=this.radius*2;
-      ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(this.x-this.radius,this.y-this.radius-6,bw,3);
-      ctx.fillStyle='#2ed573'; ctx.fillRect(this.x-this.radius,this.y-this.radius-6,bw*(this.hp/this.maxHp),3);
+      const bw=this.radius*1.8;
+      ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(this.x-bw/2,this.y-this.radius-6,bw,2);
+      ctx.fillStyle='#ae2012'; ctx.fillRect(this.x-bw/2,this.y-this.radius-6,bw*(this.hp/this.maxHp),2);
     }
-    // Indicador de quemadura
     if(this.burnTimer>0){
       ctx.beginPath(); ctx.arc(this.x,this.y,this.radius+3,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(255,140,0,${Math.min(0.8,this.burnTimer/2)})`; ctx.lineWidth=2; ctx.stroke();
+      ctx.strokeStyle=`rgba(230,81,0,${Math.min(0.8,this.burnTimer/2)})`; ctx.lineWidth=1.5; ctx.stroke();
     }
   }
 }
 
 class Projectile{
-  constructor(x,y,vx,vy,dmg,r=4,color='#00d2d3',pierce=0,bounces=0,ox=0,oy=0){
+  constructor(x,y,vx,vy,dmg,r=4,color='#d4af37',pierce=0,bounces=0,ox=0,oy=0){
     this.x=x+ox; this.y=y+oy; this.vx=vx; this.vy=vy;
-    this.damage=dmg; this.radius=r; this.color=color;
+    this.damage=dmg; this.radius=r; this.color=color; // Color dorado por defecto (haz de luz sagrada)
     this.pierceLeft=pierce; this.bouncesLeft=bounces;
     this.hitEnemies=new Set(); this.alive=true; this.isSniper=false;
   }
@@ -448,16 +705,27 @@ class Projectile{
     if(this.x<-150||this.x>canvas.width+150||this.y<-150||this.y>canvas.height+150) this.alive=false;
   }
   bounce(enemy){
-    // Buscar el siguiente enemigo más cercano no golpeado
     let next=null, nDist=Infinity;
     enemies.forEach(e=>{if(!this.hitEnemies.has(e)&&e.hp>0&&e!==enemy){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<nDist){nDist=d;next=e;}}});
     if(next){const dx=next.x-this.x, dy=next.y-this.y, d=Math.sqrt(dx*dx+dy*dy);const sp=Math.sqrt(this.vx**2+this.vy**2);this.vx=(dx/d)*sp;this.vy=(dy/d)*sp;}
     else{this.alive=false;}
   }
   draw(){
-    ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-    ctx.fillStyle=this.color; ctx.shadowColor=this.color; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
-    if(this.isSniper){ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.stroke();}
+    ctx.save();
+    // Trazado estirado imitando haces de luz balísticos de la imagen
+    const angle = Math.atan2(this.vy, this.vx);
+    ctx.translate(this.x, this.y);
+    ctx.rotate(angle);
+    
+    ctx.beginPath();
+    ctx.moveTo(-this.radius*2.5, 0);
+    ctx.lineTo(this.radius*1.5, 0);
+    ctx.strokeStyle=this.color;
+    ctx.lineWidth=this.radius*0.8;
+    ctx.shadowColor=this.color;
+    ctx.shadowBlur=12;
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -488,7 +756,7 @@ class Grenade{
   }
   explode(){
     this.alive=false;
-    for(let i=0;i<22;i++) particles.push(new Particle(this.x,this.y,'#ff9f43',1.7));
+    for(let i=0;i<22;i++) particles.push(new Particle(this.x,this.y,'#ca1d10',1.7));
     G.screenShake=Math.max(G.screenShake,9);
     const nearby=getNearbyEnemies(this.x,this.y,this.radius);
     for(let i=0;i<nearby.length;i++){
@@ -504,12 +772,12 @@ class Grenade{
   }
   draw(){
     ctx.save();
-    ctx.beginPath(); ctx.arc(this.x,this.y,7,0,Math.PI*2);
-    ctx.fillStyle='#ff9f43'; ctx.shadowColor='#ff9f43'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2);
+    ctx.fillStyle='#ae2012'; ctx.shadowColor='#ae2012'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
     if(!this.flying){
       const frac=1-this.fuseTimer/.5;
       ctx.beginPath(); ctx.arc(this.x,this.y,10,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(255,71,87,${frac})`; ctx.lineWidth=2; ctx.stroke();
+      ctx.strokeStyle=`rgba(212,175,55,${frac})`; ctx.lineWidth=1.5; ctx.stroke();
     }
     ctx.restore();
   }
@@ -517,7 +785,6 @@ class Grenade{
 
 class Drone{
   constructor(index){
-    // Posición inicial aleatoria en pantalla
     this.x=Math.random()*canvas.width;
     this.y=Math.random()*canvas.height;
     this.vx=(Math.random()-0.5)*2;
@@ -529,7 +796,6 @@ class Drone{
   }
   update(dt){
     const spd=U.droneSpeed.v/60;
-    // Wander: cambiar dirección periódicamente o si hay un objetivo cerca
     this.wanderTimer+=dt;
     let chaseTarget=null;
     let bd=U.droneRange.v;
@@ -537,12 +803,10 @@ class Drone{
     for(let i=0;i<nearby.length;i++){const e=nearby[i];if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bd){bd=d;chaseTarget=e;}}}
 
     if(chaseTarget){
-      // Moverse hacia el objetivo
       const dx=chaseTarget.x-this.x, dy=chaseTarget.y-this.y;
       const d=Math.sqrt(dx*dx+dy*dy)||1;
       this.vx=dx/d; this.vy=dy/d;
     }else if(this.wanderTimer>=this.wanderInterval){
-      // Nueva dirección aleatoria
       this.wanderTimer=0;
       this.wanderInterval=1.5+Math.random()*2;
       const a=Math.random()*Math.PI*2;
@@ -550,13 +814,11 @@ class Drone{
     }
 
     this.x+=this.vx*spd; this.y+=this.vy*spd;
-    // Rebotar en bordes
     if(this.x<20){this.x=20;this.vx=Math.abs(this.vx);}
     if(this.x>canvas.width-20){this.x=canvas.width-20;this.vx=-Math.abs(this.vx);}
     if(this.y<20){this.y=20;this.vy=Math.abs(this.vy);}
     if(this.y>canvas.height-20){this.y=canvas.height-20;this.vy=-Math.abs(this.vy);}
 
-    // Atacar
     this.attackTimer+=dt;
     const rate=1/U.droneRate.v;
     if(this.attackTimer>=rate){
@@ -565,23 +827,19 @@ class Drone{
       const atkNearby=getNearbyEnemies(this.x,this.y,bbd);
       for(let i=0;i<atkNearby.length;i++){const e=atkNearby[i];if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<bbd){bbd=d;best=e;}}}
       if(best){
-        dealDamage(best,U.droneDmg.v,'🤖');
-        lightningChains.push({x1:this.x,y1:this.y,x2:best.x,y2:best.y,alpha:1,color:'#74b9ff'});
+        dealDamage(best,U.droneDmg.v,'⛪');
+        lightningChains.push({x1:this.x,y1:this.y,x2:best.x,y2:best.y,alpha:1,color:'#d4af37'});
       }
     }
   }
   draw(){
     ctx.save();
-    // Cuerpo del drone
-    ctx.beginPath(); ctx.arc(this.x,this.y,9,0,Math.PI*2);
-    ctx.fillStyle='#74b9ff'; ctx.shadowColor='#74b9ff'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
-    ctx.beginPath(); ctx.arc(this.x,this.y,4,0,Math.PI*2);
-    ctx.fillStyle='#fff'; ctx.fill();
-    // Indicador de dirección
+    ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2);
+    ctx.fillStyle='#d4af37'; ctx.shadowColor='#d4af37'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
     const angle=Math.atan2(this.vy,this.vx);
-    ctx.beginPath(); ctx.moveTo(this.x+Math.cos(angle)*9,this.y+Math.sin(angle)*9);
-    ctx.lineTo(this.x+Math.cos(angle)*15,this.y+Math.sin(angle)*15);
-    ctx.strokeStyle='rgba(116,185,255,0.6)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(this.x,this.y);
+    ctx.lineTo(this.x+Math.cos(angle)*10,this.y+Math.sin(angle)*10);
+    ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
     ctx.restore();
   }
 }
@@ -598,11 +856,10 @@ class GoldCoin{
     if(this.phase==='float'){
       this.floatT+=dt;
       this.y=this.baseY+Math.sin(this.floatT*3+this.bob)*5;
-      // Auto-recoger tras 6s flotando para evitar acumulación ilimitada con hordas masivas
       if(this.floatT>6) this.phase='fly';
     }else{
       this.floatT+=dt; this.flyP+=dt/this.flyDur;
-      if(this.flyP>=1){this.flyP=1;this.alive=false;collectCoin(this.value);}
+      if(this.flyP>=1){this.flyP=1;this.alive=false;collectCoin(this.value,this.tx,this.ty);}
       const t=this.flyP*this.flyP;
       this.x=this.baseX+(this.tx-this.baseX)*t;
       this.y=(this.baseY+Math.sin(this.floatT*3+this.bob)*5)*(1-t)+this.ty*t;
@@ -612,9 +869,9 @@ class GoldCoin{
     const s=this.phase==='fly'?Math.max(.35,1-this.flyP*.65):1;
     const a=this.phase==='fly'?Math.max(.2,1-this.flyP*.6):1;
     ctx.save(); ctx.globalAlpha=a;
-    ctx.shadowColor='#ffec6e'; ctx.shadowBlur=this.phase==='float'?10+Math.sin(this.floatT*4)*4:6;
-    ctx.beginPath(); ctx.arc(this.x,this.y,5*s,0,Math.PI*2);
-    ctx.fillStyle='#ffd700'; ctx.fill(); ctx.restore();
+    ctx.shadowColor='#fff2a1'; ctx.shadowBlur=this.phase==='float'?12+Math.sin(this.floatT*4)*4:6;
+    ctx.beginPath(); ctx.arc(this.x,this.y,4*s,0,Math.PI*2);
+    ctx.fillStyle='#f1c40f'; ctx.fill(); ctx.restore();
   }
 }
 
@@ -627,7 +884,7 @@ class Particle{
     this.x=x; this.y=y;
     const a=Math.random()*Math.PI*2, sp=(Math.random()*4+2)*sm;
     this.vx=Math.cos(a)*sp; this.vy=Math.sin(a)*sp;
-    this.r=(Math.random()*3+1)*sm; this.alpha=1; this.decay=Math.random()*.06+.04; this.color=color;
+    this.r=(Math.random()*2.5+0.5)*sm; this.alpha=1; this.decay=Math.random()*.06+.04; this.color=color;
   }
   update(){this.x+=this.vx;this.y+=this.vy;this.alpha-=this.decay;}
   draw(){ctx.save();ctx.globalAlpha=this.alpha;ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.color;ctx.fill();ctx.restore();}
@@ -635,10 +892,44 @@ class Particle{
 
 class DamageText{
   constructor(x,y,text,color='#ffffff'){
-    this.x=x+(Math.random()*20-10); this.y=y-10; this.text=text; this.alpha=1; this.vy=-1.5; this.color=color;
+    this.x=x+(Math.random()*16-8);
+    this.y=y-8;
+    this.text=text;
+    this.alpha=1;
+    this.vy=-1.8;
+    this.color=color;
+    this.age=0;        // tiempo de vida
+    this.scale=0.3;    // empieza pequeño → crece rápido → fade
+    this.isCrit=color==='#d4af37';
   }
-  update(){this.y+=this.vy;this.vy*=.96;this.alpha-=.03;}
-  draw(){ctx.save();ctx.globalAlpha=this.alpha;ctx.font="bold 13px 'Courier New'";ctx.fillStyle=this.color;ctx.fillText(this.text,this.x,this.y);ctx.restore();}
+  update(){
+    this.age+=0.04;
+    // Pop: escala sube de 0.3 a 1.3 rápido, luego baja a 1
+    if(this.age<0.3){
+      this.scale=0.3+(1.3-0.3)*(this.age/0.3);
+    }else if(this.age<0.5){
+      this.scale=1.3-(1.3-1.0)*((this.age-0.3)/0.2);
+    }else{
+      this.scale=1.0;
+    }
+    this.y+=this.vy;
+    this.vy*=.95;
+    // Fade empieza a los 0.6s de vida
+    if(this.age>0.6) this.alpha=Math.max(0, this.alpha-0.035);
+  }
+  draw(){
+    ctx.save();
+    ctx.globalAlpha=this.alpha;
+    const fontSize=this.isCrit?Math.round(15*this.scale):Math.round(12*this.scale);
+    ctx.font=`bold ${fontSize}px 'Courier New'`;
+    ctx.textAlign='center';
+    // Sombra para legibilidad sobre el fondo claro
+    ctx.shadowColor='rgba(0,0,0,0.8)';
+    ctx.shadowBlur=4;
+    ctx.fillStyle=this.color;
+    ctx.fillText(this.text,this.x,this.y);
+    ctx.restore();
+  }
 }
 
 let bossProjectiles=[];
@@ -646,38 +937,59 @@ let bossProjectiles=[];
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function lerp(a,b,t){return a+(b-a)*t;}
 
-function collectCoin(val){
+function collectCoin(val,x,y){
   G.gold+=val; G.goldThisRound+=val; updateHUD();
+  if(x!==undefined&&y!==undefined){
+    const t=new DamageText(x+(Math.random()*20-10),y,`+${val}✦`,'#f0d080');
+    t.vy=-2.2; t.isCrit=true;
+    damageTexts.push(t);
+  }
 }
 
-function dealDamage(enemy,dmg,icon=''){
-  // Crítico si en zona crítica
+function dealDamage(enemy,dmg,icon='',dmgColor=null){
   let finalDmg=dmg;
+  let isCrit=false;
   if(U.critOn.on){
     const dx=enemy.x-G.mouseX, dy=enemy.y-G.mouseY;
     const dist=Math.sqrt(dx*dx+dy*dy);
     if(dist<U.critRadius.v&&Math.random()<U.critChance.v){
       finalDmg*=2.5;
-      damageTexts.push(new DamageText(enemy.x,enemy.y,`💥${Math.floor(finalDmg)}!`,'#ffd700'));
-    }else{
-      if(icon) damageTexts.push(new DamageText(enemy.x,enemy.y,icon+Math.floor(finalDmg)));
+      isCrit=true;
     }
-  }else{
-    if(icon) damageTexts.push(new DamageText(enemy.x,enemy.y,icon+Math.floor(finalDmg)));
   }
   enemy.hp-=finalDmg;
   G.totalDamageDealt+=finalDmg;
+  if(isCrit){
+    damageTexts.push(new DamageText(enemy.x,enemy.y,`✝ ${Math.floor(finalDmg)}!`,'#d4af37'));
+  } else if(Math.floor(finalDmg)>=3){
+    const col=dmgColor||'#e8e8e8';
+    damageTexts.push(new DamageText(enemy.x,enemy.y,`${Math.floor(finalDmg)}`,col));
+  }
+  if(icon&&icon!==''&&icon.length<=3) damageTexts.push(new DamageText(enemy.x-10,enemy.y-6,icon,'#ffffff'));
   checkDeath(enemy);
 }
 
 function checkDeath(enemy){
   if(enemy.hp>0) return;
   const cx=canvas.width/2, cy=canvas.height/2;
+  // Mancha de sangre en el suelo
+  const splats = enemy.isBoss ? 6 : enemy.isElite ? 3 : 1 + Math.floor(Math.random()*2);
+  for(let i=0;i<splats;i++){
+    bloodSplatters.push({
+      x: enemy.x + (Math.random()-0.5)*enemy.radius*1.5,
+      y: enemy.y + (Math.random()-0.5)*enemy.radius*1.5,
+      r: (enemy.radius * (0.6 + Math.random()*0.8)) * (enemy.isBoss ? 2.5 : 1),
+      alpha: 0.55 + Math.random()*0.3,
+      rot: Math.random()*Math.PI*2,
+      scaleX: 0.6 + Math.random()*0.8,
+      scaleY: 0.5 + Math.random()*0.6,
+    });
+  }
   goldCoins.push(new GoldCoin(enemy.x,enemy.y,cx,cy,enemy.goldReward));
-  for(let i=0;i<4;i++) particles.push(new Particle(enemy.x,enemy.y,enemy.color,0.8));
+  for(let i=0;i<4;i++) particles.push(new Particle(enemy.x,enemy.y,'#111',0.8));
   if(enemy.isBoss){
     G.screenShake=18;
-    for(let i=0;i<40;i++) particles.push(new Particle(enemy.x,enemy.y,'#ffd700',2));
+    for(let i=0;i<40;i++) particles.push(new Particle(enemy.x,enemy.y,'#d4af37',2));
     bossEnemy=null;
     document.getElementById('boss-bar-wrap').style.display='none';
     finishRound(true);
@@ -686,13 +998,12 @@ function checkDeath(enemy){
   if(enemy.isElite){
     if(Math.random()<U.eliteVacuum.v){
       goldCoins.forEach(c=>{if(c.phase==='float') c.phase='fly';});
-      damageTexts.push(new DamageText(enemy.x,enemy.y,'⭐ VACÍO!','#ffd700'));
+      damageTexts.push(new DamageText(enemy.x,enemy.y,'⭐ ALMAS REUNIDAS!','#d4af37'));
     }
   }
-  // Explosión de fuego si muere quemado y la mejora está activa
   if(enemy.burnTimer>0&&U.firelineChain&&U.firelineChain.v>0){
     const fireR=80;
-    for(let i=0;i<15;i++) particles.push(new Particle(enemy.x,enemy.y,'#ff7043',1.5));
+    for(let i=0;i<15;i++) particles.push(new Particle(enemy.x,enemy.y,'#ae2012',1.5));
     const nearby=getNearbyEnemies(enemy.x,enemy.y,fireR);
     for(let i=0;i<nearby.length;i++){
       const e=nearby[i];
@@ -709,7 +1020,7 @@ function checkDeath(enemy){
 function triggerBomb(ox,oy){
   const r=U.unlockBomb.on?(U.bombRadius.v||110):110;
   const dmg=U.baseDmg.v*2.5*(U.bombDmg?U.bombDmg.v:1);
-  for(let i=0;i<25;i++) particles.push(new Particle(ox,oy,'#ff9f43',1.8));
+  for(let i=0;i<25;i++) particles.push(new Particle(ox,oy,'#ca1d10',1.8));
   G.screenShake=Math.max(G.screenShake,8);
   const nearby=getNearbyEnemies(ox,oy,r);
   for(let i=0;i<nearby.length;i++){const e=nearby[i];if(e.hp>0){const d=Math.sqrt((e.x-ox)**2+(e.y-oy)**2);if(d<=r) dealDamage(e,dmg,'💥');}}
@@ -726,31 +1037,26 @@ function triggerLightning(ox,oy){
     const candidates=getNearbyEnemies(cx,cy,maxR);
     let best=null, bd=maxR;
     for(let i=0;i<candidates.length;i++){const e=candidates[i];if(e.hp>0&&!hit.has(e)){const d=Math.sqrt((e.x-cx)**2+(e.y-cy)**2);if(d<bd){bd=d;best=e;}}}
-    if(best){dealDamage(best,dmg,'⚡');lightningChains.push({x1:cx,y1:cy,x2:best.x,y2:best.y,alpha:1,color:'#00d2d3'});cx=best.x;cy=best.y;hit.add(best);}
+    if(best){dealDamage(best,dmg,'⚡');lightningChains.push({x1:cx,y1:cy,x2:best.x,y2:best.y,alpha:1,color:'#d4af37'});cx=best.x;cy=best.y;hit.add(best);}
     else break;
   }
 }
 
 // ── SPAWN ─────────────────────────────────────────────────────────────────────
-const MAX_ENEMIES_ALIVE=1500; // tope de seguridad: ya es una "mancha" total en pantalla
+const MAX_ENEMIES_ALIVE=1500; 
 function spawnSquad(){
   if(enemies.length>=MAX_ENEMIES_ALIVE) return;
-  // Spawn siempre (incluso si !G.isRoundActive para el inicio inmediato)
-  // Escala exponencial agresiva: el tamaño de horda crece sin techo con el tiempo vivido,
-  // hasta llenar la pantalla de enemigos (estilo "horda" tipo survivors).
   const t=G.difficultyTime;
-  const expScale=Math.pow(2, t/12);            // duplica cada 12s (antes 15s)
-  const lvScale=Math.pow(1.6, gameLevel-1);    // escala adicional por nivel
+  const expScale=Math.pow(2, t/12);            
+  const lvScale=Math.pow(1.6, gameLevel-1);    
   const base=4+Math.random()*3;
   let size=Math.max(1,Math.floor(base*expScale*lvScale));
   size=Math.min(size,MAX_ENEMIES_ALIVE-enemies.length);
 
   const cx=canvas.width/2, cy=canvas.height/2;
   const spawnR=Math.max(canvas.width,canvas.height)*0.65;
-  // Sector de aparición: un arco amplio centrado en un ángulo aleatorio, para que se note
-  // como "oleada" viniendo de una zona pero sin amontonarse en un único punto de 40px.
   const sectorCenter=Math.random()*Math.PI*2;
-  const sectorWidth=Math.PI*0.7+Math.min(Math.PI*1.3,t*0.01); // el arco se ensancha con el tiempo
+  const sectorWidth=Math.PI*0.7+Math.min(Math.PI*1.3,t*0.01); 
 
   for(let i=0;i<size;i++){
     const a=sectorCenter+(Math.random()-0.5)*sectorWidth;
@@ -774,7 +1080,6 @@ function spawnBoss(){
   if(bossSpawned) return;
   bossSpawned=true;
   const cx=canvas.width/2, cy=canvas.height/2;
-  // Spawn desde un borde aleatorio
   const side=Math.floor(Math.random()*4);
   let bx,by;
   if(side===0){bx=cx;by=-60;} else if(side===1){bx=canvas.width+60;by=cy;} else if(side===2){bx=cx;by=canvas.height+60;} else{bx=-60;by=cy;}
@@ -782,7 +1087,7 @@ function spawnBoss(){
   bossEnemy.x=bx; bossEnemy.y=by;
   enemies.push(bossEnemy);
   document.getElementById('boss-bar-wrap').style.display='block';
-  damageTexts.push(new DamageText(cx,cy-60,'⚠ JEFE DE NIVEL ⚠','#ff4757'));
+  damageTexts.push(new DamageText(cx,cy-60,'⚠ LA ABOMINACIÓN SUPREMA HA DESPERTADO ⚠','#ae2012'));
   G.screenShake=12;
 }
 
@@ -804,7 +1109,7 @@ function fireBase(){
   const perpX=-Math.sin(angle), perpY=Math.cos(angle);
   for(let i=0;i<cnt;i++){
     const off=i-(cnt-1)/2;
-    const p=new Projectile(cx,cy,vx,vy,U.baseDmg.v,U.baseSize.v,'#00d2d3',0,U.unlockBounce.on?U.baseBounce.v:0,perpX*off*12,perpY*off*12);
+    const p=new Projectile(cx,cy,vx,vy,U.baseDmg.v,U.baseSize.v,'#d4af37',0,U.unlockBounce.on?U.baseBounce.v:0,perpX*off*12,perpY*off*12);
     projectiles.push(p);
   }
 }
@@ -818,15 +1123,13 @@ function fireShotgun(){
   for(let i=0;i<cnt;i++){
     const a=baseAngle-spread/2+spread/(cnt-1||1)*i+(Math.random()*.12-.06);
     const spd=11;
-    pellets.push(new Projectile(cx,cy,Math.cos(a)*spd,Math.sin(a)*spd,U.sgDmg.v,4,'#fd79a8'));
+    pellets.push(new Projectile(cx,cy,Math.cos(a)*spd,Math.sin(a)*spd,U.sgDmg.v,4,'#e67e22'));
     pellets[pellets.length-1].isPellet=true;
     projectiles.push(pellets[pellets.length-1]);
   }
-  // El arco voltaico ahora es un efecto continuo gestionado por tickVoltArc() en el loop principal,
-  // que conecta perdigones cercanos entre sí mientras viajan y daña a los enemigos que atraviesan el arco.
 }
 
-// ── ARCO VOLTAICO (efecto continuo entre perdigones de escopeta) ──────────────
+// ── ARCO VOLTAICO ─────────────────────────────────────────────────────────────
 function tickVoltArc(dt){
   if(!U.unlockVoltArc.on) return;
   const pellets=projectiles.filter(p=>p.isPellet&&p.alive);
@@ -839,13 +1142,11 @@ function tickVoltArc(dt){
       const dx=p2.x-p1.x, dy=p2.y-p1.y;
       const d=Math.sqrt(dx*dx+dy*dy);
       if(d<=range){
-        // Dibujar el arco (con un ligero desvío aleatorio para efecto eléctrico)
         ctx.save(); ctx.beginPath(); ctx.moveTo(p1.x,p1.y);
         ctx.lineTo((p1.x+p2.x)/2+(Math.random()*8-4),(p1.y+p2.y)/2+(Math.random()*8-4));
         ctx.lineTo(p2.x,p2.y);
-        ctx.strokeStyle='rgba(253,121,168,0.8)'; ctx.lineWidth=2;
-        ctx.shadowColor='#fd79a8'; ctx.shadowBlur=8; ctx.stroke(); ctx.restore();
-        // Dañar a los enemigos que el segmento atraviesa (solo los cercanos al punto medio)
+        ctx.strokeStyle='rgba(212,175,55,0.7)'; ctx.lineWidth=1.5;
+        ctx.shadowColor='#d4af37'; ctx.shadowBlur=8; ctx.stroke(); ctx.restore();
         const midX=(p1.x+p2.x)/2, midY=(p1.y+p2.y)/2;
         const nearby=getNearbyEnemies(midX,midY,d/2+30);
         for(let k=0;k<nearby.length;k++){
@@ -864,10 +1165,9 @@ function fireSniper(){
   const aim=getAim();
   const angle=Math.atan2(aim.y-cy,aim.x-cx);
   const spd=20;
-  const p=new Projectile(cx,cy,Math.cos(angle)*spd,Math.sin(angle)*spd,U.snDmg.v,5,'#a29bfe',U.snPierce.v,0);
+  const p=new Projectile(cx,cy,Math.cos(angle)*spd,Math.sin(angle)*spd,U.snDmg.v,5,'#ffffff',U.snPierce.v,0);
   p.isSniper=true; projectiles.push(p);
-  // Flash visual
-  lightningChains.push({x1:cx,y1:cy,x2:cx+Math.cos(angle)*600,y2:cy+Math.sin(angle)*600,alpha:0.6,color:'rgba(162,155,254,0.3)'});
+  lightningChains.push({x1:cx,y1:cy,x2:cx+Math.cos(angle)*600,y2:cy+Math.sin(angle)*600,alpha:0.6,color:'rgba(255,255,255,0.4)'});
 }
 
 function fireGrenade(){
@@ -880,11 +1180,10 @@ function tickAura(dt){
   G.auraTimer+=dt;
   const freq=1/U.auraFreq.v;
   const cx=canvas.width/2, cy=canvas.height/2;
-  // Draw aura
   ctx.save();
   ctx.beginPath(); ctx.arc(cx,cy,U.auraRadius.v,0,Math.PI*2);
-  ctx.strokeStyle=`rgba(0,210,211,${.15+Math.sin(G.auraTimer*6)*.08})`; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle=`rgba(0,210,211,0.03)`; ctx.fill();
+  ctx.strokeStyle=`rgba(212,175,55,${.15+Math.sin(G.auraTimer*6)*.08})`; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle=`rgba(212,175,55,0.02)`; ctx.fill();
   ctx.restore();
   if(G.auraTimer>=freq){
     G.auraTimer=0;
@@ -920,8 +1219,8 @@ function tickFireline(dt){
     const fl=activeFireline;
     ctx.save();
     ctx.beginPath(); ctx.moveTo(fl.x1,fl.y1); ctx.lineTo(fl.x2,fl.y2);
-    ctx.strokeStyle=`rgba(255,107,107,${fl.alpha})`; ctx.lineWidth=U.firelineWidth.v;
-    ctx.shadowColor='#ff6b6b'; ctx.shadowBlur=12; ctx.stroke(); ctx.restore();
+    ctx.strokeStyle=`rgba(174,32,18,${fl.alpha})`; ctx.lineWidth=U.firelineWidth.v;
+    ctx.shadowColor='#ae2012'; ctx.shadowBlur=12; ctx.stroke(); ctx.restore();
     const lineLen=Math.sqrt((fl.x2-fl.x1)**2+(fl.y2-fl.y1)**2);
     const steps=Math.max(1,Math.ceil(lineLen/150));
     const tol=U.firelineWidth.v/2+20;
@@ -936,7 +1235,7 @@ function tickFireline(dt){
         seen.add(e);
         if(e.hp>0&&pointOnLine(e.x,e.y,fl.x1,fl.y1,fl.x2,fl.y2,U.firelineWidth.v/2+e.radius)){
           dealDamage(e,U.firelineDmg.v*dt,'🔥');
-          e.burnTimer=Math.max(e.burnTimer, U.firelineBurn.v); // aplicar quemadura
+          e.burnTimer=Math.max(e.burnTimer, U.firelineBurn.v); 
         }
       }
     }
@@ -962,13 +1261,12 @@ function drawCritZone(){
   const r=U.critRadius.v;
   ctx.save();
   ctx.beginPath(); ctx.arc(G.mouseX,G.mouseY,r,0,Math.PI*2);
-  ctx.strokeStyle='rgba(253,203,110,.35)'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+  ctx.strokeStyle='rgba(212,175,55,.35)'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
   ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle='rgba(253,203,110,.04)'; ctx.fill();
-  // Label de ralentización
-  ctx.font='bold 10px Courier New'; ctx.fillStyle='rgba(253,203,110,0.5)';
+  ctx.fillStyle='rgba(212,175,55,.03)'; ctx.fill();
+  ctx.font='10px Courier New'; ctx.fillStyle='rgba(212,175,55,0.6)';
   ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(`ZONA CRIT -${Math.floor(U.critSlow.v*100)}%`, G.mouseX, G.mouseY-r-10);
+  ctx.fillText(`FOCO SACRO -${Math.floor(U.critSlow.v*100)}%`, G.mouseX, G.mouseY-r-10);
   ctx.restore();
 }
 
@@ -976,7 +1274,7 @@ function drawCritZone(){
 function tickTractor(dt){
   if(!U.tractorOn.on) return;
   G.tractorTimer+=dt;
-  const rate=1/Math.max(0.1,U.tractorFreq.v);  // usa tractorFreq; lento al inicio (0.3/s)
+  const rate=1/Math.max(0.1,U.tractorFreq.v);  
   if(G.tractorTimer>=rate){
     G.tractorTimer=0;
     const floating=goldCoins.filter(c=>c.phase==='float');
@@ -986,7 +1284,7 @@ function tickTractor(dt){
       floating.forEach(c=>{if(c.phase==='float'){const d=Math.sqrt((c.x-canvas.width/2)**2+(c.y-canvas.height/2)**2);if(d<bd){bd=d;best=c;}}});
       if(best){
         best.phase='fly';
-        lightningChains.push({x1:canvas.width/2,y1:canvas.height/2,x2:best.x,y2:best.y,alpha:0.8,color:'#ffd700'});
+        lightningChains.push({x1:canvas.width/2,y1:canvas.height/2,x2:best.x,y2:best.y,alpha:0.8,color:'#d4af37'});
       }
     }
   }
@@ -999,7 +1297,7 @@ class Missile{
     const cx=canvas.width/2, cy=canvas.height/2;
     this.x=cx; this.y=cy;
     this.vx=0; this.vy=-1;
-    this.target=tx; // enemy object
+    this.target=tx; 
     this.alive=true;
     this.trail=[];
   }
@@ -1020,7 +1318,7 @@ class Missile{
   }
   explode(){
     this.alive=false;
-    for(let i=0;i<22;i++) particles.push(new Particle(this.x,this.y,'#ff9f43',1.8));
+    for(let i=0;i<22;i++) particles.push(new Particle(this.x,this.y,'#ca1d10',1.8));
     G.screenShake=Math.max(G.screenShake,7);
     enemies.forEach(e=>{
       if(e.hp>0){const d=Math.sqrt((e.x-this.x)**2+(e.y-this.y)**2);if(d<=U.missileRadius.v) dealDamage(e,U.missileDmg.v*(1-d/U.missileRadius.v*.5),'💥');}
@@ -1028,11 +1326,11 @@ class Missile{
   }
   draw(){
     for(let i=0;i<this.trail.length;i++){
-      ctx.beginPath(); ctx.arc(this.trail[i].x,this.trail[i].y,3*(i/this.trail.length),0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,159,67,${0.5*i/this.trail.length})`; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.trail[i].x,this.trail[i].y,2.5*(i/this.trail.length),0,Math.PI*2);
+      ctx.fillStyle=`rgba(212,175,55,${0.4*i/this.trail.length})`; ctx.fill();
     }
-    ctx.beginPath(); ctx.arc(this.x,this.y,6,0,Math.PI*2);
-    ctx.fillStyle='#ff9f43'; ctx.shadowColor='#ff9f43'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(this.x,this.y,5,0,Math.PI*2);
+    ctx.fillStyle='#d4af37'; ctx.shadowColor='#d4af37'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
   }
 }
 
@@ -1065,8 +1363,8 @@ function tickLaser(dt){
     dealDamage(e,U.laserDps.v*dt,'');
     const px=i===0?cx:sorted[i-1].e.x, py=i===0?cy:sorted[i-1].e.y;
     ctx.save(); ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(e.x,e.y);
-    ctx.strokeStyle=`rgba(255,50,50,0.85)`; ctx.lineWidth=3-i*.5;
-    ctx.shadowColor='#ff3232'; ctx.shadowBlur=15; ctx.stroke(); ctx.restore();
+    ctx.strokeStyle=`rgba(174,32,18,0.95)`; ctx.lineWidth=2.5-i*.5;
+    ctx.shadowColor='#ae2012'; ctx.shadowBlur=15; ctx.stroke(); ctx.restore();
   });
 }
 
@@ -1085,30 +1383,27 @@ function tickOrbit(dt){
       const e=nearby[k];
       if(e.hp>0){const d=Math.sqrt((e.x-ox)**2+(e.y-oy)**2);if(d<=e.radius+10) dealDamage(e,U.orbitDmg.v*dt*4,'');}
     }
-    ctx.beginPath(); ctx.arc(ox,oy,10,0,Math.PI*2);
-    ctx.fillStyle='#5f27cd'; ctx.shadowColor='#a29bfe'; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(ox,oy,8,0,Math.PI*2);
+    ctx.fillStyle='#4a148c'; ctx.shadowColor='#ba68c8'; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ox,oy);
-    ctx.strokeStyle='rgba(162,155,254,0.15)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.strokeStyle='rgba(212,175,55,0.1)'; ctx.lineWidth=1; ctx.stroke();
   }
 }
 
 // ── SOMBRAS ──────────────────────────────────────────────────────────────────
-const MAX_SHADOWS=180; // tope de sombras dibujadas por frame para sostener hordas masivas
+const MAX_SHADOWS=180; 
 function drawShadowLayer(cx,cy){
   const W=shadowCanvas.width, H=shadowCanvas.height;
-  const scale=0.5; // shadowCanvas está a mitad de resolución del canvas principal
+  const scale=0.5; 
   shadowCtx.clearRect(0,0,W,H);
   const op=Math.max(0.05,U.shadowOp.v);
-  // El maxDim en espacio de shadowCanvas (ya escalado a la mitad)
   const maxDim=Math.sqrt(canvas.width**2+canvas.height**2)*1.6*scale;
   shadowCtx.save();
-  // Replicar la transformación de cámara escalada a mitad
   shadowCtx.translate(cx*scale,cy*scale); shadowCtx.scale(G.cameraZoom,G.cameraZoom); shadowCtx.translate(-cx*scale,-cy*scale);
   shadowCtx.globalCompositeOperation='source-over';
   shadowCtx.globalAlpha=op;
-  const dynamicMax=enemies.length>800?60:enemies.length>300?100:MAX_SHADOWS;
-  const shadowSet=enemies; // sombra para todos los enemigos sin límite
-  shadowCtx.fillStyle='rgba(5,7,12,1)';
+  const shadowSet=enemies; 
+  shadowCtx.fillStyle='rgba(3,3,5,1)';
   shadowCtx.beginPath();
   for(let i=0;i<shadowSet.length;i++){
     const e=shadowSet[i];
@@ -1129,7 +1424,7 @@ function drawShadowLayer(cx,cy){
   projectiles.forEach(p=>{
     const px=p.x*scale, py=p.y*scale, pr=55*scale;
     const g=shadowCtx.createRadialGradient(px,py,0,px,py,pr);
-    g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(.5,'rgba(0,0,0,.7)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(.5,'rgba(0,0,0,.6)'); g.addColorStop(1,'rgba(0,0,0,0)');
     shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(px,py,pr,0,Math.PI*2); shadowCtx.fill();
   });
   goldCoins.forEach(c=>{
@@ -1139,31 +1434,29 @@ function drawShadowLayer(cx,cy){
     shadowCtx.fillStyle=g; shadowCtx.beginPath(); shadowCtx.arc(cx2,cy2,cr,0,Math.PI*2); shadowCtx.fill();
   });
   shadowCtx.restore();
-  // Escalar el shadowCanvas de vuelta al tamaño completo al componer sobre el ctx principal
   ctx.save(); ctx.globalCompositeOperation='multiply';
   ctx.drawImage(shadowCanvas,0,0,canvas.width,canvas.height); ctx.restore();
 }
 
 // ── HUD & SHOP ───────────────────────────────────────────────────────────────
 function updateHUD(){
-  document.getElementById('gold-hud').innerText=`🪙 ${G.gold}`;
+  document.getElementById('gold-hud').innerText=`✦ ${G.gold} Almas`;
   document.getElementById('timer-hud').innerText=formatTime(G.roundTimer);
-  document.getElementById('hp-hud').innerText=`❤ ${Math.max(0,Math.ceil(G.towerHealth))}`;
-  document.getElementById('enemies-hud').innerText=`👾 ${G.enemiesAlive}`;
-  document.getElementById('level-hud').innerText=`Nivel ${gameLevel}`;
-  document.getElementById('shop-gold').innerText=`🪙 ${G.gold}`;
-  document.getElementById('shop-level-badge').innerText=`NIVEL ${gameLevel} — Dificultad ${getDiffLabel()}`;
+  document.getElementById('hp-hud').innerText=`✝ ${Math.max(0,Math.ceil(G.towerHealth))}`;
+  document.getElementById('enemies-hud').innerText=`👁 ${G.enemiesAlive}`;
+  document.getElementById('level-hud').innerText=`Día ${toRoman(gameLevel)}`;
+  const sg=document.getElementById('shop-gold'); if(sg) sg.innerText=`${G.gold} Almas`;
+  const slb=document.getElementById('shop-level-badge'); if(slb) slb.innerText=`DÍA ${toRoman(gameLevel)} — ${getDiffLabel()}`;
   const td=document.getElementById('timer-hud');
   if(G.isRoundActive) td.classList.add('timer-active'); else td.classList.remove('timer-active');
   if(bossEnemy&&bossEnemy.hp>0){
     document.getElementById('boss-bar').style.width=`${(bossEnemy.hp/bossEnemy.maxHp)*100}%`;
   }
 }
-function getDiffLabel(){const labels=['Base','Dura','Brutal','Caótica','Apocalíptica'];return labels[Math.min(gameLevel-1,labels.length-1)];}
+function getDiffLabel(){const labels=['Génesis','Tribulación','Gran Tribulación','Ira de Dios','Juicio Final'];return labels[Math.min(gameLevel-1,labels.length-1)];}
 function formatTime(s){const m=Math.floor(s/60);return`${m.toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`;}
-
+function toRoman(n){const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1],r=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];let s='';for(let i=0;i<v.length;i++){while(n>=v[i]){s+=r[i];n-=v[i];}}return s;}
 let currentTab='active';
-// Mapa de isWeapon -> clave real del upgrade que lo desbloquea (no todas siguen el patrón 'unlock'+Nombre)
 const WEAPON_UNLOCK_KEY={
   Aura:'auraOn', Drone:'droneOn', Fireline:'firelineOn', Crit:'critOn', Tractor:'tractorOn',
   Bomb:'unlockBomb', Bounce:'unlockBounce', Electric:'unlockElectric', Grenade:'unlockGrenade',
@@ -1173,6 +1466,7 @@ const WEAPON_UNLOCK_KEY={
 
 function renderShop(){
   const c=document.getElementById('upgrades-container');
+  if(!c) return; // sidebar removed, tree is inline now
   c.innerHTML='';
   const keys=Object.keys(U).filter(k=>U[k].tab===currentTab);
   let lastCat='';
@@ -1182,27 +1476,26 @@ function renderShop(){
       const h=document.createElement('div'); h.className='section-label'; h.innerText=up.cat; c.appendChild(h);
       lastCat=up.cat;
     }
-    // Ocultar sub-armas no desbloqueadas
     if(up.isWeapon){
       const pk=WEAPON_UNLOCK_KEY[up.isWeapon];
       if(!U[pk]||!U[pk].on) return;
     }
     const isMaxUnlock=up.isUnlock&&up.on;
-    const isMaxUpgUnlock=up.isUpgUnlock&&up.lv>1&&up.v>=1; // purchased once is enough
+    const isMaxUpgUnlock=up.isUpgUnlock&&up.lv>1&&up.v>=1; 
     const isShadowMax=key==='shadowOp'&&up.v<=0.05;
     const btn=document.createElement('button');
     btn.className='upgrade-btn';
     btn.disabled=G.gold<up.cost||isMaxUnlock||isMaxUpgUnlock||isShadowMax;
 
     let val='';
-    if(up.isUnlock||up.isUpgUnlock) val=up.on?'ACTIVO':'🔒';
+    if(up.isUnlock||up.isUpgUnlock) val=up.on?'✓ ACTIVO':'🔒 SELLADO';
     else if(key.includes('Rate')||key.includes('rate')||key.includes('Freq')||key.includes('freq')) val=up.v.toFixed(2)+'/s';
     else if(key==='shadowOp') val=Math.round(up.v*100)+'%';
     else if(key==='eliteVacuum') val=Math.round(up.v*100)+'%';
     else if(key==='critChance') val=Math.round(up.v*100)+'%';
     else val=typeof up.v==='number'&&up.v%1!==0?up.v.toFixed(1):up.v;
 
-    btn.innerHTML=`<div class="up-info"><span class="up-name">${up.name}${(!up.isUnlock&&!up.isUpgUnlock)?` (${up.lv})`:''}  <span style="font-size:.6rem;color:#a29bfe">[${val}]</span></span><span class="up-desc">${up.desc}</span></div><span class="up-cost">${isMaxUnlock||isMaxUpgUnlock||isShadowMax?'MAX':`${Math.floor(up.cost)}🪙`}</span>`;
+    btn.innerHTML=`<div class="up-info"><span class="up-name">${up.name}${(!up.isUnlock&&!up.isUpgUnlock)?` <span style="font-size:.6rem;color:var(--text-dim)">(${up.lv})</span>`:''}  <span style="font-size:.58rem;color:var(--gold-dim)">[${val}]</span></span><span class="up-desc">${up.desc}</span></div><span class="up-cost">${isMaxUnlock||isMaxUpgUnlock||isShadowMax?'✦ MAX':`${Math.floor(up.cost)} ✦`}</span>`;
     btn.onclick=()=>buyUpgrade(key);
     c.appendChild(btn);
   });
@@ -1214,10 +1507,8 @@ function buyUpgrade(key){
   G.gold-=up.cost; up.lv++;
   if(up.isUnlock){
     up.on=true;
-    // Activar todas las sub-mejoras cuyo unlock real (vía WEAPON_UNLOCK_KEY) sea esta clave
     Object.keys(U).forEach(k=>{if(U[k].isWeapon&&WEAPON_UNLOCK_KEY[U[k].isWeapon]===key) U[k].on=true;});
   }else if(up.isUpgUnlock){
-    // Upgrade que también funciona como unlock (ej: Explosión al morir)
     up.v+=up.inc; up.on=true;
     up.cost=Math.floor(up.bc*Math.pow(up.sc,up.lv-1));
   }else{
@@ -1248,9 +1539,11 @@ function startRound(){
   bossSpawned=false; bossEnemy=null;
   enemies=[]; particles=[]; damageTexts=[]; goldCoins=[]; lightningChains=[];
   projectiles=[]; grenades=[]; activeDrones=[]; bossProjectiles=[]; activeFireline=null; missiles=[]; missileTimer=0; orbitAngle=0;
+  bloodSplatters=[];
   document.getElementById('shop-overlay').classList.add('hidden');
   document.getElementById('start-overlay').classList.add('hidden');
   document.getElementById('boss-bar-wrap').style.display='none';
+  canvas.style.pointerEvents='auto';
   spawnSquad(); spawnSquad(); updateHUD(); renderShop();
 }
 
@@ -1261,24 +1554,25 @@ function finishRound(victory=false){
   if(nb) records.bestTime=survived; if(ng) records.bestGold=goldEarned; if(nd) records.bestDamage=dmg;
   if(victory){
     gameLevel++;
-    document.getElementById('round-title').innerText='¡NIVEL SUPERADO!';
-    document.getElementById('round-title').style.color='#2ed573';
-    document.getElementById('round-summary').innerText=`Has derrotado al Jefe del Nivel ${gameLevel-1}. Nivel ${gameLevel} desbloqueado.`;
+    document.getElementById('round-title').innerText='✝ VIGILIA SUPERADA';
+    document.getElementById('round-title').style.color='#c9a84c';
+    document.getElementById('round-summary').innerText=`El Arcángel Caído ha sido exorcizado. Día ${toRoman(gameLevel)} — las legiones vuelven más fuertes.`;
   }else{
-    document.getElementById('round-title').innerText='¡Torre Colapsada!';
-    document.getElementById('round-title').style.color='#ff4757';
-    document.getElementById('round-summary').innerText=`La horda destruyó el núcleo. (Nivel ${gameLevel})`;
+    document.getElementById('round-title').innerText='LA CAPILLA HA CAÍDO';
+    document.getElementById('round-title').style.color='#ae2012';
+    document.getElementById('round-summary').innerText=`Las sombras asimilaron las reliquias sagradas. (Día ${toRoman(gameLevel)})`;
   }
   const box=document.getElementById('round-stats-box'); box.innerHTML='';
   function card(l,v,best,rec){
     const d=document.createElement('div'); d.className='stat-card'+(best?' best':'');
-    d.innerHTML=`<div class="sc-label">${l}</div><div class="sc-value">${v}</div><div class="sc-record">${best?'🏆 Nuevo récord':(rec>0?`Récord: ${rec}`:'')}</div>`;
+    d.innerHTML=`<div class="sc-label">${l}</div><div class="sc-value">${v}</div><div class="sc-record">${best?'🏆 Consagración Máxima':(rec>0?`Record: ${rec}`:'')}</div>`;
     return d;
   }
-  box.appendChild(card('Tiempo',formatTime(survived),nb,formatTime(records.bestTime)));
-  box.appendChild(card('Oro',goldEarned+'🪙',ng,records.bestGold+'🪙'));
-  box.appendChild(card('Daño',dmg.toLocaleString(),nd,records.bestDamage.toLocaleString()));
+  box.appendChild(card('Resistencia',formatTime(survived),nb,formatTime(records.bestTime)));
+  box.appendChild(card('Almas',goldEarned,ng,records.bestGold));
+  box.appendChild(card('Purga Dmg',dmg.toLocaleString(),nd,records.bestDamage.toLocaleString()));
   document.getElementById('shop-overlay').classList.remove('hidden');
+  canvas.style.pointerEvents='none';
   renderShop(); updateHUD();
 }
 
@@ -1288,23 +1582,40 @@ function loop(ts){
   const dt=Math.min((ts-lastTime)/1000,.1)||.016; lastTime=ts;
   const shopOpen=!document.getElementById('shop-overlay').classList.contains('hidden');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const cx=canvas.width/2, cy=canvas.height/2, tr=35;
+  // ── TEXTURA DE SUELO (pre-baked, dibujada fuera del zoom de cámara) ──
+  if(groundTexReady) ctx.drawImage(groundTexCanvas, 0, 0);
+  // ── MANCHAS DE SANGRE (espacio mundo, antes del zoom) ──
+  if(bloodSplatters.length>0){
+    const bcx=canvas.width/2, bcy=canvas.height/2;
+    ctx.save();
+    ctx.translate(bcx,bcy); ctx.scale(G.cameraZoom,G.cameraZoom); ctx.translate(-bcx,-bcy);
+    for(let i=0;i<bloodSplatters.length;i++){
+      const s=bloodSplatters[i];
+      ctx.save();
+      ctx.globalAlpha=s.alpha;
+      ctx.translate(s.x,s.y); ctx.rotate(s.rot); ctx.scale(s.scaleX,s.scaleY);
+      const g=ctx.createRadialGradient(0,0,0,0,0,s.r);
+      g.addColorStop(0,'rgba(28,4,4,0.95)');
+      g.addColorStop(0.5,'rgba(18,2,2,0.7)');
+      g.addColorStop(1,'rgba(8,0,0,0)');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.ellipse(0,0,s.r,s.r*0.7,0,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  const cx=canvas.width/2, cy=canvas.height/2;
 
   if(!shopOpen){
-
-  // Filtrar enemigos muertos al inicio del frame (antes del spawn) para que el guard
-  // MAX_ENEMIES_ALIVE sea preciso y no se acumulen zombies entre frames.
   if(G.isRoundActive) enemies=enemies.filter(e=>e.hp>0);
   buildEnemyGrid();
 
   if(G.isRoundActive){
     G.roundTimer+=dt; G.spawnTimer+=dt; G.difficultyTime+=dt;
     if(!bossSpawned&&G.roundTimer>=30) spawnBoss();
-    // Cooldown de spawn exponencialmente más corto con el tiempo, con suelo más bajo
-    // para sostener oleadas casi continuas una vez la dificultad despega.
     const sqCD=Math.max(0.15, 3.0*Math.pow(0.90, G.difficultyTime))/Math.max(1, gameLevel*.5);
     if(G.spawnTimer>=sqCD){G.spawnTimer=0;spawnSquad();}
-    // Armas activas
+    
     G.baseTimer+=dt;
     if(G.baseTimer>=1/U.baseRate.v){G.baseTimer=0;fireBase();}
     if(U.unlockShotgun.on){G.shotgunTimer+=dt;if(G.shotgunTimer>=1/U.sgRate.v){G.shotgunTimer=0;fireShotgun();}}
@@ -1314,7 +1625,6 @@ function loop(ts){
     document.getElementById('diff-bar').style.width=`${Math.min((G.difficultyTime%30)/30*100,100)}%`;
     updateHUD();
   } else {
-    // Aunque no estemos en ronda activa, seguir spawneando para que haya enemigos desde el inicio
     G.spawnTimer+=dt; G.difficultyTime=0;
     if(G.spawnTimer>=4){G.spawnTimer=0;spawnSquad();}
   }
@@ -1323,26 +1633,89 @@ function loop(ts){
   ctx.translate(cx,cy); ctx.scale(G.cameraZoom,G.cameraZoom); ctx.translate(-cx,-cy);
   if(G.screenShake>0){ctx.translate((Math.random()-.5)*G.screenShake,(Math.random()-.5)*G.screenShake);G.screenShake*=.88;if(G.screenShake<.2)G.screenShake=0;}
 
-  // Torre
-  ctx.beginPath(); ctx.arc(cx,cy,tr,0,Math.PI*2);
-  ctx.fillStyle='#2c3a50'; ctx.strokeStyle='#00d2d3'; ctx.lineWidth=4; ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx,cy,tr*.6,0,Math.PI*2);
-  const hpFrac=G.towerHealth/G.towerMaxHealth;
-  const hpColor=hpFrac>0.5?'#10ac84':hpFrac>0.25?'#f9ca24':'#ff4757';
-  ctx.fillStyle=G.towerHealth<15?`rgba(255,71,87,${Math.abs(Math.sin(ts*.01))})`:hpColor; ctx.fill();
-  // HP en número dentro de la torre
-  ctx.font=`bold ${Math.min(14,12+Math.floor(Math.log10(Math.max(1,G.towerMaxHealth))))}px Courier New`;
-  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=4;
-  ctx.fillText(Math.ceil(G.towerHealth),cx,cy);
-  ctx.shadowBlur=0;
+  // ── REFORMULACIÓN DE LA TORRE: CAPILLA/IGLESIA BENDITA (Fiel a la imagen "image_709fcd.png") ──
+  ctx.save();
+  // Halo de luz cálida central debajo de la estructura
+  let lightGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 65);
+  lightGrad.addColorStop(0, 'rgba(212,175,55,0.25)');
+  lightGrad.addColorStop(0.4, 'rgba(212,175,55,0.08)');
+  lightGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = lightGrad;
+  ctx.beginPath(); ctx.arc(cx, cy, 65, 0, Math.PI*2); ctx.fill();
+
+  // 1. Paredes base de la iglesia (Piedra oscura/Gótica)
+  ctx.fillStyle = '#1e1e24';
+  ctx.strokeStyle = '#0d0d11';
+  ctx.lineWidth = 2;
+  ctx.fillRect(cx - 14, cy - 4, 28, 22);
+  ctx.strokeRect(cx - 14, cy - 4, 28, 22);
+
+  // 2. Torre/Campanario central elevado
+  ctx.fillRect(cx - 7, cy - 24, 14, 20);
+  ctx.strokeRect(cx - 7, cy - 24, 14, 20);
+
+  // 3. Tejado piramidal apuntado hacia el cielo
+  ctx.fillStyle = '#0d0d11';
+  ctx.beginPath();
+  ctx.moveTo(cx - 8, cy - 24);
+  ctx.lineTo(cx, cy - 42);
+  ctx.lineTo(cx + 8, cy - 24);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Tejadillo de la nave inferior
+  ctx.beginPath();
+  ctx.moveTo(cx - 15, cy - 4);
+  ctx.lineTo(cx - 7, cy - 10);
+  ctx.lineTo(cx + 7, cy - 10);
+  ctx.lineTo(cx + 15, cy - 4);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // 4. Puerta arqueada dorada luminosa (Eje focal de iluminación de la imagen original)
+  let doorFrac = Math.max(0, G.towerHealth / G.towerMaxHealth);
+  ctx.fillStyle = doorFrac < 0.25 && Math.sin(ts*0.015) > 0 ? '#ae2012' : '#fff3a1';
+  ctx.shadowColor = '#d4af37';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.moveTo(cx - 4, cy + 18);
+  ctx.lineTo(cx - 4, cy + 6);
+  ctx.arc(cx, cy + 6, 4, Math.PI, 0, false);
+  ctx.lineTo(cx + 4, cy + 18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // 5. La emblemática Cruz brillante en lo alto del campanario
+  ctx.save();
+  ctx.strokeStyle = '#fff';
+  ctx.shadowColor = '#fff';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  // Eje vertical
+  ctx.moveTo(cx, cy - 44);
+  ctx.lineTo(cx, cy - 54);
+  // Eje horizontal
+  ctx.moveTo(cx - 4, cy - 51);
+  ctx.lineTo(cx + 4, cy - 51);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore(); // Fin dibujo Capilla procedural
+
+  // Indicador numérico de vida (Sanctum) integrado limpiamente debajo
+  ctx.font = "bold 10px 'Courier New'";
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText(Math.ceil(G.towerHealth), cx, cy + 32);
 
   // Pasivas visuales
   tickAura(dt);
   tickDrones(dt,cx,cy);
   tickFireline(dt);
   drawCritZone();
-  // Activas adicionales
+  
   if(G.isRoundActive){
     tickMissile(dt);
     tickLaser(dt);
@@ -1354,7 +1727,7 @@ function loop(ts){
     ctx.save(); ctx.beginPath(); ctx.moveTo(c.x1,c.y1);
     ctx.lineTo((c.x1+c.x2)/2+(Math.random()*12-6),(c.y1+c.y2)/2+(Math.random()*12-6));
     ctx.lineTo(c.x2,c.y2);
-    ctx.strokeStyle=`rgba(${hexToRgb(c.color)},${c.alpha})`; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
+    ctx.strokeStyle=`rgba(${hexToRgb(c.color)},${c.alpha})`; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
     c.alpha-=dt*4;
   });
   lightningChains=lightningChains.filter(c=>c.alpha>0);
@@ -1362,12 +1735,11 @@ function loop(ts){
   // Enemigos
   enemies.forEach(e=>{
     const d=e.update(cx,cy,dt);
-    if(d<=(tr+e.radius)){
+    if(d<=(24+e.radius)){ // Radio de colisión ajustado a la geometría de la capilla
       e.hp=0;
-      if(G.isRoundActive){G.towerHealth-=e.dmgToTower;G.screenShake=8;for(let i=0;i<5;i++)particles.push(new Particle(e.x,e.y,'#ff4757',1.2));}
+      if(G.isRoundActive){G.towerHealth-=e.dmgToTower;G.screenShake=8;for(let i=0;i<5;i++)particles.push(new Particle(e.x,e.y,'#ae2012',1.2));}
     }else e.draw();
   });
-  // (enemies ya fue filtrado al inicio del frame, no necesitamos filtrarlo de nuevo aquí)
 
   // Proyectiles jugador
   projectiles.forEach(p=>{
@@ -1380,8 +1752,9 @@ function loop(ts){
         const d=Math.sqrt((e.x-p.x)**2+(e.y-p.y)**2);
         if(d<=(e.radius+p.radius*1.8)){
           p.hitEnemies.add(e);
-          dealDamage(e,p.damage,'');
-          for(let k=0;k<2;k++) particles.push(new Particle(e.x,e.y,e.color,.8));
+          const dmgColor=p.isSniper?'#a8d8ff':(p.color||'#e8e8e8');
+          dealDamage(e,p.damage,'',dmgColor);
+          for(let k=0;k<2;k++) particles.push(new Particle(e.x,e.y,'#111116',.8));
           if(p.bouncesLeft>0){p.bouncesLeft--;p.bounce(e);}
           else if(p.pierceLeft>0) p.pierceLeft--;
           else p.alive=false;
@@ -1397,11 +1770,10 @@ function loop(ts){
   bossProjectiles.forEach(bp=>{
     bp.x+=bp.vx; bp.y+=bp.vy;
     if(bp.x<-50||bp.x>canvas.width+50||bp.y<-50||bp.y>canvas.height+50) bp.alive=false;
-    // Daño a la torre
     const d=Math.sqrt((bp.x-cx)**2+(bp.y-cy)**2);
-    if(d<=tr+bp.r){bp.alive=false;if(G.isRoundActive){G.towerHealth-=8;G.screenShake=4;}}
+    if(d<=24+bp.r){bp.alive=false;if(G.isRoundActive){G.towerHealth-=8;G.screenShake=4;}}
     ctx.beginPath(); ctx.arc(bp.x,bp.y,bp.r,0,Math.PI*2);
-    ctx.fillStyle='#ff6b81'; ctx.shadowColor='#ff6b81'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle='#ae2012'; ctx.shadowColor='#ae2012'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
   });
   bossProjectiles=bossProjectiles.filter(b=>b.alive);
 
@@ -1414,10 +1786,8 @@ function loop(ts){
     if(G.towerHealth<=0){G.towerHealth=0;finishRound(false);}
   }
 
-  // Aplicar topes antes de actualizar para evitar crecimiento ilimitado con hordas masivas
   if(particles.length>MAX_PARTICLES) particles=particles.slice(-MAX_PARTICLES);
   if(goldCoins.length>MAX_GOLDCOINS){
-    // Auto-recoger las más antiguas (llevan más tiempo flotando) dando el oro al jugador
     const excess=goldCoins.slice(0, goldCoins.length-MAX_GOLDCOINS);
     excess.forEach(c=>collectCoin(c.value));
     goldCoins=goldCoins.slice(goldCoins.length-MAX_GOLDCOINS);
@@ -1429,23 +1799,383 @@ function loop(ts){
 
   ctx.restore();
   drawShadowLayer(cx,cy);
-  } // end !shopOpen
+  } 
 
   requestAnimationFrame(loop);
 }
 
 function hexToRgb(hex){
-  if(hex.startsWith('rgba')||hex.startsWith('rgb')) return '0,210,211';
+  if(hex.startsWith('rgba')||hex.startsWith('rgb')) return '212,175,55';
   const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
 }
 
 document.getElementById('start-btn').onclick=()=>startRound();
-document.getElementById('next-btn').onclick=()=>startRound();
+document.getElementById('retry-btn').onclick=()=>startRound();
+document.getElementById('shop-btn').onclick=()=>openUpgradeTree();
+
+// ── SHORTCUTS DE TECLADO ──────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const shopOverlayVisible = !document.getElementById('shop-overlay').classList.contains('hidden');
+  const treeVisible = !document.getElementById('tree-overlay').classList.contains('hidden');
+  if(e.code === 'Space' && shopOverlayVisible && !treeVisible){
+    e.preventDefault();
+    startRound();
+  }
+  if((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && shopOverlayVisible && !treeVisible){
+    e.preventDefault();
+    openUpgradeTree();
+  }
+});
 window.onload=()=>{updateHUD();renderShop();spawnSquad();spawnSquad();};
 requestAnimationFrame(loop);
+
+// ── ÁRBOL DE MEJORAS INLINE ───────────────────────────────────────────────────
+const COL = 280, ROW = 110, OX = 160, OY = 80;
+const TREE_NODES = [
+  {id:'baseDmg',   key:'baseDmg',      x:OX+COL*0, y:OY+ROW*0, parents:[]},
+  {id:'baseRate',  key:'baseRate',      x:OX+COL*0, y:OY+ROW*1, parents:['baseDmg']},
+  {id:'baseCount', key:'baseCount',     x:OX+COL*0, y:OY+ROW*2, parents:['baseRate']},
+  {id:'baseSize',  key:'baseSize',      x:OX+COL*0, y:OY+ROW*3, parents:['baseCount']},
+  {id:'unlockBounce',key:'unlockBounce',x:OX+COL*0, y:OY+ROW*4, parents:['baseSize']},
+  {id:'baseBounce',key:'baseBounce',    x:OX+COL*0, y:OY+ROW*5, parents:['unlockBounce']},
+
+  {id:'unlockShotgun',key:'unlockShotgun',x:OX+COL*1, y:OY+ROW*0, parents:[]},
+  {id:'sgDmg',    key:'sgDmg',           x:OX+COL*1, y:OY+ROW*1, parents:['unlockShotgun']},
+  {id:'sgCount',  key:'sgCount',          x:OX+COL*1-55, y:OY+ROW*2, parents:['sgDmg']},
+  {id:'sgRate',   key:'sgRate',           x:OX+COL*1+55, y:OY+ROW*2, parents:['sgDmg']},
+  {id:'unlockVoltArc',key:'unlockVoltArc',x:OX+COL*1, y:OY+ROW*3, parents:['sgCount','sgRate']},
+  {id:'voltArcDmg',key:'voltArcDmg',      x:OX+COL*1-55, y:OY+ROW*4, parents:['unlockVoltArc']},
+  {id:'voltArcRange',key:'voltArcRange',  x:OX+COL*1+55, y:OY+ROW*4, parents:['unlockVoltArc']},
+
+  {id:'unlockSniper',key:'unlockSniper',  x:OX+COL*2, y:OY+ROW*0, parents:[]},
+  {id:'snDmg',    key:'snDmg',            x:OX+COL*2-55, y:OY+ROW*1, parents:['unlockSniper']},
+  {id:'snRate',   key:'snRate',           x:OX+COL*2+55, y:OY+ROW*1, parents:['unlockSniper']},
+  {id:'snPierce', key:'snPierce',          x:OX+COL*2, y:OY+ROW*2, parents:['snDmg','snRate']},
+
+  {id:'unlockGrenade',key:'unlockGrenade', x:OX+COL*3, y:OY+ROW*0, parents:[]},
+  {id:'grDmg',    key:'grDmg',             x:OX+COL*3-55, y:OY+ROW*1, parents:['unlockGrenade']},
+  {id:'grRadius', key:'grRadius',           x:OX+COL*3+55, y:OY+ROW*1, parents:['unlockGrenade']},
+  {id:'grRate',   key:'grRate',             x:OX+COL*3-55, y:OY+ROW*2, parents:['grDmg']},
+  {id:'grRange',  key:'grRange',            x:OX+COL*3+55, y:OY+ROW*2, parents:['grRadius']},
+
+  {id:'auraOn',    key:'auraOn',            x:OX+COL*4, y:OY+ROW*0, parents:[]},
+  {id:'auraDmg',   key:'auraDmg',           x:OX+COL*4-55, y:OY+ROW*1, parents:['auraOn']},
+  {id:'auraRadius',key:'auraRadius',         x:OX+COL*4+55, y:OY+ROW*1, parents:['auraOn']},
+  {id:'auraFreq',  key:'auraFreq',           x:OX+COL*4, y:OY+ROW*2, parents:['auraDmg','auraRadius']},
+
+  {id:'droneOn',    key:'droneOn',           x:OX+COL*5, y:OY+ROW*0, parents:[]},
+  {id:'droneCount', key:'droneCount',         x:OX+COL*5, y:OY+ROW*1, parents:['droneOn']},
+  {id:'droneDmg',   key:'droneDmg',           x:OX+COL*5-55, y:OY+ROW*2, parents:['droneCount']},
+  {id:'droneRate',  key:'droneRate',           x:OX+COL*5+55, y:OY+ROW*2, parents:['droneCount']},
+  {id:'droneRange', key:'droneRange',          x:OX+COL*5-55, y:OY+ROW*3, parents:['droneDmg']},
+  {id:'droneSpeed', key:'droneSpeed',          x:OX+COL*5+55, y:OY+ROW*3, parents:['droneRate']},
+
+  {id:'firelineOn',   key:'firelineOn',        x:OX+COL*6, y:OY+ROW*0, parents:[]},
+  {id:'firelineDmg',  key:'firelineDmg',        x:OX+COL*6-55, y:OY+ROW*1, parents:['firelineOn']},
+  {id:'firelineBurn', key:'firelineBurn',        x:OX+COL*6+55, y:OY+ROW*1, parents:['firelineOn']},
+  {id:'firelineChain',key:'firelineChain',       x:OX+COL*6-55, y:OY+ROW*2, parents:['firelineDmg','firelineBurn']},
+  {id:'firelineWidth',key:'firelineWidth',       x:OX+COL*6+55, y:OY+ROW*2, parents:['firelineDmg','firelineBurn']},
+  {id:'firelineFreq', key:'firelineFreq',        x:OX+COL*6, y:OY+ROW*3, parents:['firelineChain','firelineWidth']},
+
+  {id:'critOn',     key:'critOn',              x:OX+COL*7, y:OY+ROW*0, parents:[]},
+  {id:'critRadius', key:'critRadius',           x:OX+COL*7-55, y:OY+ROW*1, parents:['critOn']},
+  {id:'critChance', key:'critChance',           x:OX+COL*7+55, y:OY+ROW*1, parents:['critOn']},
+  {id:'critSlow',   key:'critSlow',             x:OX+COL*7, y:OY+ROW*2, parents:['critRadius','critChance']},
+
+  {id:'unlockMissile',key:'unlockMissile',      x:OX+COL*8-55, y:OY+ROW*0, parents:[]},
+  {id:'missileDmg',  key:'missileDmg',           x:OX+COL*8-110,y:OY+ROW*1, parents:['unlockMissile']},
+  {id:'missileRate', key:'missileRate',           x:OX+COL*8-55, y:OY+ROW*1, parents:['unlockMissile']},
+  {id:'missileRadius',key:'missileRadius',        x:OX+COL*8-110,y:OY+ROW*2, parents:['missileDmg','missileRate']},
+
+  {id:'unlockLaser', key:'unlockLaser',          x:OX+COL*8+55, y:OY+ROW*0, parents:[]},
+  {id:'laserDps',    key:'laserDps',             x:OX+COL*8,    y:OY+ROW*1, parents:['unlockLaser']},
+  {id:'laserChain',  key:'laserChain',            x:OX+COL*8+110,y:OY+ROW*1, parents:['unlockLaser']},
+  {id:'laserRange',  key:'laserRange',            x:OX+COL*8+55, y:OY+ROW*2, parents:['laserDps','laserChain']},
+
+  {id:'unlockOrbit', key:'unlockOrbit',          x:OX+COL*9, y:OY+ROW*0, parents:[]},
+  {id:'orbitCount',  key:'orbitCount',            x:OX+COL*9-55,y:OY+ROW*1, parents:['unlockOrbit']},
+  {id:'orbitDmg',    key:'orbitDmg',             x:OX+COL*9+55,y:OY+ROW*1, parents:['unlockOrbit']},
+  {id:'orbitRadius', key:'orbitRadius',           x:OX+COL*9-55,y:OY+ROW*2, parents:['orbitCount']},
+  {id:'orbitSpeed',  key:'orbitSpeed',            x:OX+COL*9+55,y:OY+ROW*2, parents:['orbitDmg']},
+
+  {id:'tractorOn',   key:'tractorOn',            x:OX+COL*10, y:OY+ROW*0, parents:[]},
+  {id:'tractorCount',key:'tractorCount',          x:OX+COL*10-55,y:OY+ROW*1, parents:['tractorOn']},
+  {id:'tractorFreq', key:'tractorFreq',           x:OX+COL*10+55,y:OY+ROW*1, parents:['tractorOn']},
+  {id:'coinRadius',  key:'coinRadius',            x:OX+COL*10, y:OY+ROW*2, parents:['tractorCount','tractorFreq']},
+
+  {id:'unlockBomb',  key:'unlockBomb',            x:OX+COL*11, y:OY+ROW*0, parents:[]},
+  {id:'bombRate',    key:'bombRate',              x:OX+COL*11-55,y:OY+ROW*1, parents:['unlockBomb']},
+  {id:'bombDmg',     key:'bombDmg',              x:OX+COL*11+55,y:OY+ROW*1, parents:['unlockBomb']},
+  {id:'bombRadius',  key:'bombRadius',            x:OX+COL*11, y:OY+ROW*2, parents:['bombRate','bombDmg']},
+
+  {id:'unlockElectric',key:'unlockElectric',      x:OX+COL*12, y:OY+ROW*0, parents:[]},
+  {id:'elecRate',    key:'elecRate',              x:OX+COL*12-55,y:OY+ROW*1, parents:['unlockElectric']},
+  {id:'elecDmg',     key:'elecDmg',              x:OX+COL*12+55,y:OY+ROW*1, parents:['unlockElectric']},
+  {id:'elecRange',   key:'elecRange',             x:OX+COL*12-55,y:OY+ROW*2, parents:['elecDmg']},
+  {id:'elecChain',   key:'elecChain',             x:OX+COL*12+55,y:OY+ROW*2, parents:['elecDmg']},
+
+  {id:'towerHp',    key:'towerHp',               x:OX+COL*13, y:OY+ROW*0, parents:[]},
+  {id:'shadowOp',   key:'shadowOp',              x:OX+COL*13, y:OY+ROW*1, parents:['towerHp']},
+  {id:'eliteVacuum',key:'eliteVacuum',            x:OX+COL*13, y:OY+ROW*2, parents:['shadowOp']},
+];
+
+const SECTION_LABELS = {
+  0:'Luz Sagrada', 1:'Destello Abanico', 2:'Juicio Penetrante', 3:'Humo Condenatorio',
+  4:'Aura Bendita', 5:'Drones Guardianes', 6:'Línea de Fuego', 7:'Zona Crítica',
+  8:'Arsenal Celestial', 9:'Esferas Órbita', 10:'Rayo Tractor', 11:'Entidades Inestables',
+  12:'Nexo Relámpago', 13:'Altar'
+};
+
+// Viewport persistente del árbol (se guarda al cerrar)
+let treeVP = { x: 0, y: 0, zoom: 1, initialized: false };
+let treeVPX = 0, treeVPY = 0, treeZoom = 1;
+let treeDragging = false, treeLastMX = 0, treeLastMY = 0;
+let treeMouseX = 0, treeMouseY = 0;
+let treeHoveredNode = null;
+let treeRAF = null;
+
+const treeCanvas = document.getElementById('tree-canvas-el');
+const treeCtx = treeCanvas.getContext('2d');
+
+function treeToScreen(x, y) { return { sx: x * treeZoom + treeVPX, sy: y * treeZoom + treeVPY }; }
+function treeToWorld(sx, sy) { return { x: (sx - treeVPX) / treeZoom, y: (sy - treeVPY) / treeZoom }; }
+
+function treeResizeCanvas() {
+  // Forzar layout antes de leer dimensiones
+  const overlay = document.getElementById('tree-overlay');
+  treeCanvas.width  = overlay.clientWidth  || window.innerWidth;
+  treeCanvas.height = (overlay.clientHeight || window.innerHeight) - document.getElementById('tree-overlay-header').offsetHeight;
+}
+
+function treeGetNodeState(node) {
+  const up = U[node.key];
+  if (!up) return 'hidden';
+  const parentsOk = node.parents.every(pid => {
+    const pnode = TREE_NODES.find(n => n.id === pid);
+    if (!pnode) return true;
+    const pup = U[pnode.key];
+    return pup && (pup.on || pup.lv > 1);
+  });
+  if (!parentsOk) return 'locked';
+  if (up.isUnlock && up.on) return 'maxed';
+  if (up.isUpgUnlock && up.on && up.lv > 1) return 'maxed';
+  if (G.gold >= up.cost) return 'available';
+  return 'affordable';
+}
+
+function treeNodeColor(state) {
+  switch (state) {
+    case 'locked':     return { fill: '#0d0a0e', stroke: '#2a1e28', text: '#3a2a38' };
+    case 'affordable': return { fill: '#100c14', stroke: '#4a3050', text: '#7a5a70' };
+    case 'available':  return { fill: '#141020', stroke: '#c9a84c', text: '#f0d080' };
+    case 'maxed':      return { fill: '#100e08', stroke: '#c9a84c', text: '#c9a84c' };
+    default:           return { fill: '#0d0a0e', stroke: '#2a1e28', text: '#3a2a38' };
+  }
+}
+
+function treeDrawNode(node) {
+  const up = U[node.key];
+  if (!up) return;
+  const state = treeGetNodeState(node);
+  const col = treeNodeColor(state);
+  const { sx, sy } = treeToScreen(node.x, node.y);
+  const W = 96 * treeZoom, H = 54 * treeZoom;
+  const rx = sx - W / 2, ry = sy - H / 2;
+  treeCtx.save();
+  if (state === 'available') { treeCtx.shadowColor = '#c9a84c'; treeCtx.shadowBlur = 14 * treeZoom; }
+  treeCtx.fillStyle = col.fill;
+  treeCtx.strokeStyle = state === 'maxed' ? '#f0d080' : col.stroke;
+  treeCtx.lineWidth = (state === 'available' || state === 'maxed') ? 2 * treeZoom : 1 * treeZoom;
+  treeCtx.beginPath(); treeCtx.roundRect(rx, ry, W, H, 4 * treeZoom); treeCtx.fill(); treeCtx.stroke();
+  treeCtx.shadowBlur = 0;
+  if (state === 'maxed') {
+    treeCtx.strokeStyle = 'rgba(240,208,128,0.3)'; treeCtx.lineWidth = 4 * treeZoom;
+    treeCtx.beginPath(); treeCtx.roundRect(rx - 2, ry - 2, W + 4, H + 4, 5 * treeZoom); treeCtx.stroke();
+  }
+  const fs = Math.max(6, 9 * treeZoom);
+  treeCtx.font = `600 ${fs}px 'Cinzel',serif`;
+  treeCtx.fillStyle = col.text; treeCtx.textAlign = 'center'; treeCtx.textBaseline = 'middle';
+  const maxW = W - 8 * treeZoom;
+  let name = up.name;
+  if (treeCtx.measureText(name).width > maxW) name = name.substring(0, Math.floor(name.length * (maxW / treeCtx.measureText(name).width) - 1)) + '…';
+  treeCtx.fillText(name, sx, sy - 8 * treeZoom);
+  const fs2 = Math.max(5, 7.5 * treeZoom);
+  treeCtx.font = `${fs2}px 'Cinzel',serif`;
+  treeCtx.fillStyle = state === 'locked' ? '#3a2a38' : state === 'maxed' ? '#f0d080' : '#a08060';
+  if (state === 'locked') treeCtx.fillText('🔒 SELLADO', sx, sy + 8 * treeZoom);
+  else if (state === 'maxed') treeCtx.fillText('✦ MAX', sx, sy + 8 * treeZoom);
+  else {
+    let val = up.v;
+    if (typeof val === 'number' && val % 1 !== 0) val = val.toFixed(1);
+    treeCtx.fillText(`Niv.${up.lv}  [${val}]`, sx, sy + 8 * treeZoom);
+    const fs3 = Math.max(4, 7 * treeZoom);
+    treeCtx.font = `700 ${fs3}px 'Cinzel',serif`;
+    treeCtx.fillStyle = G.gold >= up.cost ? '#e8d44a' : '#5a4010';
+    treeCtx.fillText(`${up.cost} ✦`, sx, sy + 19 * treeZoom);
+  }
+  treeCtx.restore();
+}
+
+function treeDrawEdge(parent, child) {
+  const ps = treeToScreen(parent.x, parent.y);
+  const cs = treeToScreen(child.x, child.y);
+  const state = treeGetNodeState(child);
+  treeCtx.save();
+  treeCtx.strokeStyle = state === 'locked' ? '#221828' : state === 'maxed' ? 'rgba(201,168,76,0.5)' : state === 'available' ? 'rgba(201,168,76,0.35)' : 'rgba(100,60,100,0.25)';
+  treeCtx.lineWidth = 1.5 * treeZoom;
+  treeCtx.setLineDash(state === 'locked' ? [4 * treeZoom, 4 * treeZoom] : []);
+  treeCtx.beginPath(); treeCtx.moveTo(ps.sx, ps.sy + 27 * treeZoom); treeCtx.lineTo(cs.sx, cs.sy - 27 * treeZoom); treeCtx.stroke();
+  treeCtx.setLineDash([]); treeCtx.restore();
+}
+
+function treeDrawSectionLabels() {
+  const drawn = new Set();
+  TREE_NODES.forEach(node => {
+    const col = Math.round((node.x - 160) / 280);
+    if (drawn.has(col)) return;
+    drawn.add(col);
+    const label = SECTION_LABELS[col];
+    if (!label) return;
+    const { sx, sy } = treeToScreen(node.x, 40);
+    treeCtx.save();
+    treeCtx.font = `600 ${Math.max(7, 10 * treeZoom)}px 'Cinzel',serif`;
+    treeCtx.fillStyle = 'rgba(100,70,30,0.6)'; treeCtx.textAlign = 'center'; treeCtx.textBaseline = 'middle';
+    treeCtx.fillText(label, sx, sy);
+    treeCtx.restore();
+  });
+}
+
+function treeGetHoveredNode() {
+  const { x, y } = treeToWorld(treeMouseX, treeMouseY);
+  return TREE_NODES.find(n => Math.abs(n.x - x) < 52 && Math.abs(n.y - y) < 30) || null;
+}
+
+function treeUpdateTooltip(mx, my) {
+  const node = treeGetHoveredNode();
+  treeHoveredNode = node;
+  const tt = document.getElementById('tree-tooltip');
+  if (!node) { tt.style.display = 'none'; return; }
+  const up = U[node.key];
+  if (!up) { tt.style.display = 'none'; return; }
+  const state = treeGetNodeState(node);
+  document.getElementById('tt-name').textContent = up.name;
+  document.getElementById('tt-desc').textContent = up.desc;
+  let valStr = (up.isUnlock || up.isUpgUnlock) ? (up.on ? 'Estado: ACTIVO' : 'Estado: SELLADO') : `Actual: ${typeof up.v === 'number' && up.v % 1 !== 0 ? up.v.toFixed(2) : up.v}  (+${up.inc} por nivel)`;
+  document.getElementById('tt-val').textContent = valStr;
+  document.getElementById('tt-cost').textContent = state === 'maxed' ? '✦ MÁXIMO' : state === 'locked' ? '' : `Coste: ${up.cost} Almas`;
+  document.getElementById('tt-locked').textContent = state === 'locked' ? '⟨ Desbloquea mejoras anteriores primero ⟩' : state === 'affordable' ? '⟨ Almas insuficientes ⟩' : '';
+  tt.style.display = 'block';
+  let tx = mx + 18, ty = my - 10;
+  if (tx + 240 > window.innerWidth) tx = mx - 240 - 6;
+  if (ty + 120 > window.innerHeight) ty = my - 130;
+  tt.style.left = tx + 'px'; tt.style.top = ty + 'px';
+}
+
+function treeDrawFrame() {
+  if (document.getElementById('tree-overlay').classList.contains('hidden')) return;
+  treeCtx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+  treeCtx.fillStyle = '#080608'; treeCtx.fillRect(0, 0, treeCanvas.width, treeCanvas.height);
+  // Grid sutil
+  treeCtx.strokeStyle = 'rgba(40,28,40,0.4)'; treeCtx.lineWidth = 1;
+  const gs = 50 * treeZoom;
+  const ox = ((treeVPX % gs) + gs) % gs, oy = ((treeVPY % gs) + gs) % gs;
+  for (let x = ox; x < treeCanvas.width; x += gs) { treeCtx.beginPath(); treeCtx.moveTo(x, 0); treeCtx.lineTo(x, treeCanvas.height); treeCtx.stroke(); }
+  for (let y = oy; y < treeCanvas.height; y += gs) { treeCtx.beginPath(); treeCtx.moveTo(0, y); treeCtx.lineTo(treeCanvas.width, y); treeCtx.stroke(); }
+  treeDrawSectionLabels();
+  TREE_NODES.forEach(node => node.parents.forEach(pid => { const parent = TREE_NODES.find(n => n.id === pid); if (parent) treeDrawEdge(parent, node); }));
+  TREE_NODES.forEach(node => treeDrawNode(node));
+  document.getElementById('tree-gold-val').textContent = G.gold;
+  treeRAF = requestAnimationFrame(treeDrawFrame);
+}
+
+// Eventos del árbol inline
+treeCanvas.addEventListener('mousemove', e => {
+  const rect = treeCanvas.getBoundingClientRect();
+  treeMouseX = e.clientX - rect.left; treeMouseY = e.clientY - rect.top;
+  if (treeDragging) { treeVPX += e.clientX - treeLastMX; treeVPY += e.clientY - treeLastMY; treeLastMX = e.clientX; treeLastMY = e.clientY; }
+  treeUpdateTooltip(e.clientX, e.clientY);
+});
+treeCanvas.addEventListener('mousedown', e => { treeDragging = true; treeLastMX = e.clientX; treeLastMY = e.clientY; });
+document.addEventListener('mouseup', () => treeDragging = false);
+treeCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.91;
+  const mx = e.clientX - treeCanvas.getBoundingClientRect().left;
+  const my = e.clientY - treeCanvas.getBoundingClientRect().top;
+  treeVPX = (treeVPX - mx) * factor + mx; treeVPY = (treeVPY - my) * factor + my;
+  treeZoom *= factor; treeZoom = Math.max(0.25, Math.min(3, treeZoom));
+}, { passive: false });
+
+treeCanvas.addEventListener('click', e => {
+  if (treeDragging) return;
+  const node = treeGetHoveredNode();
+  if (!node) return;
+  const up = U[node.key];
+  if (!up) return;
+  const state = treeGetNodeState(node);
+  if (state === 'locked' || state === 'maxed') return;
+  if (G.gold < up.cost) return;
+  G.gold -= up.cost; up.lv++;
+  if (up.isUnlock) {
+    up.on = true;
+    Object.keys(U).forEach(k => { if (U[k].isWeapon && WEAPON_UNLOCK_KEY[U[k].isWeapon] === node.key) U[k].on = true; });
+  } else if (up.isUpgUnlock) { up.v += up.inc; up.on = true; up.cost = Math.floor(up.bc * Math.pow(up.sc, up.lv - 1)); }
+  else { up.v += up.inc; up.cost = Math.floor(up.bc * Math.pow(up.sc, up.lv - 1)); }
+  if (node.key === 'towerHp') G.towerMaxHealth = up.v;
+  updateHUD();
+  treeUpdateTooltip(e.clientX, e.clientY);
+});
+
+function openUpgradeTree() {
+  document.getElementById('tree-overlay').classList.remove('hidden');
+  treeResizeCanvas();
+  if (!treeVP.initialized) {
+    treeVPX = treeCanvas.width / 2 - 800;
+    treeVPY = treeCanvas.height / 2 - 200;
+    treeVP.initialized = true;
+  } else {
+    treeVPX = treeVP.x; treeVPY = treeVP.y; treeZoom = treeVP.zoom;
+  }
+  if (!treeRAF) treeDrawFrame();
+}
+
+function closeUpgradeTree() {
+  treeVP.x = treeVPX; treeVP.y = treeVPY; treeVP.zoom = treeZoom;
+  document.getElementById('tree-overlay').classList.add('hidden');
+  document.getElementById('tree-tooltip').style.display = 'none';
+  if (treeRAF) { cancelAnimationFrame(treeRAF); treeRAF = null; }
+}
+
+document.getElementById('tree-close-btn').addEventListener('click', closeUpgradeTree);
+// Evento para redimensionar el árbol de habilidades correctamente
+window.addEventListener('resize', () => { 
+  if (!document.getElementById('tree-overlay').classList.contains('hidden')) {
+    treeResizeCanvas();
+  }
+});
+
+// CAPTURA Y MOVIMIENTO DEL CURSOR PERSONALIZADO (Mirilla Dorada)
+const customCursorEl = document.getElementById('custom-cursor');
+
+window.addEventListener('mousemove', (e) => {
+  if (typeof G !== 'undefined') {
+    G.mouseX = e.clientX;
+    G.mouseY = e.clientY;
+  }
+  if (customCursorEl) {
+    customCursorEl.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+  }
+});
+
+// Ocultar cursor solo al salir completamente de la ventana
+document.documentElement.addEventListener('mouseleave', () => {
+  if (customCursorEl) customCursorEl.style.display = 'none';
+});
+document.documentElement.addEventListener('mouseenter', () => {
+  if (customCursorEl) customCursorEl.style.display = 'block';
+});
 </script>
 </body>
 </html>
-
 
